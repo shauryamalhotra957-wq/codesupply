@@ -1,4 +1,4 @@
-﻿import json
+import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -8,12 +8,20 @@ from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse
 
 from backend.database import DatabaseRepository
-from backend.models import ComponentModel, FindingModel, ProjectModel
+from backend.models import (
+    ComponentModel,
+    FindingModel,
+    ProjectModel,
+    SbomComparisonModel,
+    VulnerabilityModel,
+)
 from backend.services.report_generator import ReportGenerator
 from backend.services.scanner_service import ScannerService
 from scanner.normalization.normalizer import NormalizedComponent
+from scanner.sbom.differ import SbomDiffer
 from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractionError
+from scanner.security.vuln_engine import VulnerabilityEngine
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 scanner_service = ScannerService()
@@ -247,3 +255,42 @@ def export_pdf_report(project_id: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/{project_id}/vulnerabilities", response_model=List[VulnerabilityModel])
+def get_project_vulnerabilities(project_id: str):
+    """Retrieves all matched CVE vulnerability and exploitation records for the project."""
+    components = DatabaseRepository.get_components(project_id)
+    if components is None:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    vulnerabilities = []
+    for c in components:
+        matches = VulnerabilityEngine.match_component(
+            c.get("name", ""), c.get("version"), c.get("ecosystem", "")
+        )
+        for m in matches:
+            vulnerabilities.append(VulnerabilityModel(**m))
+
+    return vulnerabilities
+
+
+@router.get("/{base_project_id}/compare/{target_project_id}", response_model=SbomComparisonModel)
+def compare_sbom_projects(base_project_id: str, target_project_id: str):
+    """Calculates full SBOM diff, version migrations, and vulnerability drift between two projects."""
+    base_proj = DatabaseRepository.get_project(base_project_id)
+    target_proj = DatabaseRepository.get_project(target_project_id)
+    if not base_proj or not target_proj:
+        raise HTTPException(status_code=404, detail="One or both projects not found.")
+
+    base_components = DatabaseRepository.get_components(base_project_id)
+    target_components = DatabaseRepository.get_components(target_project_id)
+
+    diff_result = SbomDiffer.compare_projects(
+        base_project_id=base_project_id,
+        target_project_id=target_project_id,
+        base_components=base_components,
+        target_components=target_components,
+    )
+    return diff_result
+

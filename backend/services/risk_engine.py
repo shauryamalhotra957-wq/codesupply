@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from scanner.normalization.normalizer import NormalizedComponent
 from scanner.parsers.base import ParsedDependency
+from scanner.security.vuln_engine import VulnerabilityEngine
 
 
 @dataclass
@@ -139,6 +140,24 @@ class RiskEngine:
                         category="Hygiene",
                         title=f"Deprecated/EOL Component: '{comp.name}'",
                         evidence=f"Detected package '{comp.name}' in {comp.source_file}. Note: {reason}",
+                    )
+                )
+
+        # 6. Check Known CVEs and Exploits
+        for comp in normalized_components:
+            matches = VulnerabilityEngine.match_component(comp.name, comp.version, comp.ecosystem)
+            for vuln in matches:
+                kev_flag = " [CISA KEV EXPLOITED]" if vuln.get("cisa_kev") else ""
+                remed = f" Recommended fix: upgrade to {vuln.get('remediation_version')}." if vuln.get("remediation_version") else ""
+                findings.append(
+                    Finding(
+                        component_name=comp.name,
+                        severity=vuln.get("severity", "HIGH"),
+                        category="Vulnerability",
+                        title=f"{vuln.get('cve_id')}: {vuln.get('package_name')}{kev_flag}",
+                        evidence=f"CVSS v3.1: {vuln.get('cvss_v3_score')} | EPSS: {vuln.get('epss_score') * 100:.1f}% | {vuln.get('summary')}{remed}",
+                        explanation=vuln.get("summary", ""),
+                        recommendation=vuln.get("remediation_version", ""),
                     )
                 )
 

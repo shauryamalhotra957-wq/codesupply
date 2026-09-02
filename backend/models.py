@@ -62,3 +62,35 @@ class GraphDataModel(BaseModel):
     total_edges: int
     react_flow: Dict[str, Any]
     cyclonedx_dependencies: List[Dict[str, Any]]
+
+
+class VulnerabilityModel(BaseModel):
+    cve_id: str
+    ecosystem: str
+    package_name: str
+    affected_version_range: str
+    cvss_v3_score: float
+    severity: str
+    summary: str
+    cwe_id: str = "CWE-20"
+    cisa_kev: bool = False
+    epss_score: float = 0.05
+    remediation_version: str = ""
+    references: List[str] = Field(default_factory=list)
+
+
+class SbomComparisonModel(BaseModel):
+    base_project_id: str
+    target_project_id: str
+    total_base_components: int
+    total_target_components: int
+    added_count: int
+    removed_count: int
+    version_changes_count: int
+    added_components: List[Dict[str, Any]]
+    removed_components: List[Dict[str, Any]]
+    version_changes: List[Dict[str, Any]]
+    new_vulnerabilities: List[Dict[str, Any]]
+    resolved_vulnerabilities: List[Dict[str, Any]]
+    net_vulnerability_delta: int
+
