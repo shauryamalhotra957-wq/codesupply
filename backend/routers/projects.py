@@ -1,3 +1,4 @@
+﻿import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -10,6 +11,8 @@ from backend.database import DatabaseRepository
 from backend.models import ComponentModel, FindingModel, ProjectModel
 from backend.services.report_generator import ReportGenerator
 from backend.services.scanner_service import ScannerService
+from scanner.normalization.normalizer import NormalizedComponent
+from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractionError
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
@@ -134,6 +137,34 @@ def get_project_sbom(project_id: str):
     return JSONResponse(content=sbom)
 
 
+@router.get("/{project_id}/spdx")
+def get_project_spdx(project_id: str):
+    """Retrieves the full SPDX v2.3 JSON SBOM document."""
+    proj = DatabaseRepository.get_project(project_id)
+    raw_components = DatabaseRepository.get_components(project_id)
+    if not proj or not raw_components:
+        raise HTTPException(status_code=404, detail="Project or components not found.")
+
+    components = [
+        NormalizedComponent(
+            name=c.get("name", ""),
+            version=c.get("version"),
+            raw_specifier=c.get("raw_specifier"),
+            ecosystem=c.get("ecosystem", "generic"),
+            direct=c.get("direct", True),
+            source_file=c.get("source_file", ""),
+            purl=c.get("purl", ""),
+            scope=c.get("scope", "required"),
+            license=c.get("license"),
+            integrity=c.get("integrity"),
+            resolved_url=c.get("resolved_url"),
+        )
+        for c in raw_components
+    ]
+    spdx_doc = SPDXGenerator.generate_sbom(project_name=proj["name"], components=components)
+    return JSONResponse(content=spdx_doc)
+
+
 @router.get("/{project_id}/export/cyclonedx")
 def export_cyclonedx_file(project_id: str):
     """Downloads the CycloneDX v1.5 JSON file."""
@@ -143,9 +174,41 @@ def export_cyclonedx_file(project_id: str):
         raise HTTPException(status_code=404, detail="Project or SBOM not found.")
 
     filename = f"{proj['name'].replace(' ', '_').lower()}-cyclonedx-sbom.json"
-    import json
     return Response(
         content=json.dumps(sbom, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{project_id}/export/spdx")
+def export_spdx_file(project_id: str):
+    """Downloads the SPDX v2.3 JSON file."""
+    proj = DatabaseRepository.get_project(project_id)
+    raw_components = DatabaseRepository.get_components(project_id)
+    if not proj or not raw_components:
+        raise HTTPException(status_code=404, detail="Project or components not found.")
+
+    components = [
+        NormalizedComponent(
+            name=c.get("name", ""),
+            version=c.get("version"),
+            raw_specifier=c.get("raw_specifier"),
+            ecosystem=c.get("ecosystem", "generic"),
+            direct=c.get("direct", True),
+            source_file=c.get("source_file", ""),
+            purl=c.get("purl", ""),
+            scope=c.get("scope", "required"),
+            license=c.get("license"),
+            integrity=c.get("integrity"),
+            resolved_url=c.get("resolved_url"),
+        )
+        for c in raw_components
+    ]
+    spdx_doc = SPDXGenerator.generate_sbom(project_name=proj["name"], components=components)
+    filename = f"{proj['name'].replace(' ', '_').lower()}-spdx-2.3-sbom.json"
+    return Response(
+        content=json.dumps(spdx_doc, indent=2),
         media_type="application/json",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
