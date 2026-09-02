@@ -1,4 +1,4 @@
-import re
+﻿import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
@@ -15,12 +15,12 @@ class NormalizedComponent:
     name: str
     version: Optional[str] = None
     raw_specifier: Optional[str] = None
-    ecosystem: str = "unknown"  # pypi, npm
+    ecosystem: str = "unknown"  # pypi, npm, cargo, golang
     direct: bool = True
     source_file: str = ""
     source_files: List[str] = field(default_factory=list)
     purl: str = ""
-    scope: str = "required"  # required, dev, optional
+    scope: str = "required"  # required, dev, optional, transitive
     license: Optional[str] = None
     integrity: Optional[str] = None
     resolved_url: Optional[str] = None
@@ -55,13 +55,14 @@ class DependencyNormalizer:
     @staticmethod
     def normalize_name(name: str, ecosystem: str) -> str:
         clean = name.strip()
-        if ecosystem == "pypi":
+        eco = ecosystem.lower()
+        if eco == "pypi":
             # PEP 503 normalization: lower-case, replace run of [-_.] with single '-'
-            # But keep readable canonical name
             return re.sub(r"[-_.]+", "-", clean).lower()
-        elif ecosystem == "npm":
-            # NPM packages are lowercase in the modern registry, scoped packages start with @
+        elif eco == "npm" or eco == "cargo":
             return clean.lower()
+        elif eco == "golang":
+            return clean
         return clean
 
     @classmethod
@@ -89,6 +90,16 @@ class DependencyNormalizer:
                 if version:
                     return f"pkg:npm/{norm_name}@{version}"
                 return f"pkg:npm/{norm_name}"
+        elif eco == "cargo":
+            norm_name = cls.normalize_name(name, "cargo")
+            if version:
+                return f"pkg:cargo/{norm_name}@{version}"
+            return f"pkg:cargo/{norm_name}"
+        elif eco == "golang":
+            norm_name = name.strip()
+            if version:
+                return f"pkg:golang/{norm_name}@{version}"
+            return f"pkg:golang/{norm_name}"
         else:
             if version:
                 return f"pkg:generic/{name}@{version}"
@@ -138,30 +149,29 @@ class DependencyNormalizer:
                     existing.version = dep.version
                     existing.purl = cls.generate_purl(canonical_name, dep.version, eco)
                 elif existing.version and dep.version and existing.version != dep.version:
-                    # Note potential duplicate/conflict in metadata
-                    existing.metadata.setdefault("alternative_versions", []).append(dep.version)
+                    if existing.raw_specifier and not dep.specifier:
+                        # existing had a specifier, dep might have exact version from lockfile
+                        existing.version = dep.version
+                        existing.purl = cls.generate_purl(canonical_name, dep.version, eco)
 
-                # 3. Specifier: retain original specifier
-                if not existing.raw_specifier and dep.specifier:
-                    existing.raw_specifier = dep.specifier
-
-                # 4. Source files provenance
+                # 3. Source files tracking
                 if dep.source_file and dep.source_file not in existing.source_files:
                     existing.source_files.append(dep.source_file)
                     if not existing.source_file:
                         existing.source_file = dep.source_file
 
-                # 5. License, Integrity, Resolved URL
-                if not existing.license and dep.license:
-                    existing.license = dep.license
-                if not existing.integrity and dep.integrity:
+                # 4. Integrity & metadata
+                if dep.integrity and not existing.integrity:
                     existing.integrity = dep.integrity
-                if not existing.resolved_url and dep.resolved_url:
+                if dep.resolved_url and not existing.resolved_url:
                     existing.resolved_url = dep.resolved_url
-
-                # 6. Child dependencies list
-                for sub in dep.dependencies:
-                    if sub not in existing.dependencies:
-                        existing.dependencies.append(sub)
+                if dep.license and not existing.license:
+                    existing.license = dep.license
+                if dep.dependencies:
+                    for d in dep.dependencies:
+                        if d not in existing.dependencies:
+                            existing.dependencies.append(d)
+                if dep.metadata:
+                    existing.metadata.update(dep.metadata)
 
         return list(components_map.values())

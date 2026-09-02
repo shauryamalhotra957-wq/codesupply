@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List
@@ -9,22 +9,27 @@ from backend.services.risk_explanation_service import RiskExplanationService
 from scanner.detection.detector import ProjectDetector
 from scanner.normalization.normalizer import DependencyNormalizer, NormalizedComponent
 from scanner.parsers.base import ParsedDependency
+from scanner.parsers.cargo_parser import CargoParser
+from scanner.parsers.golang_parser import GolangParser
 from scanner.parsers.node_parser import NodeParser
 from scanner.parsers.python_parser import PythonParser
 from scanner.relationships.graph_builder import DependencyGraphBuilder
 from scanner.sbom.cyclonedx_generator import CycloneDXGenerator
+from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractor
 
 
 class ScannerService:
     """
     Coordinates the end-to-end scanning pipeline:
-    Extract -> Detect -> Parse -> Normalize -> Analyze Risks -> Build Graph -> Generate CycloneDX -> Persist.
+    Extract -> Detect -> Parse -> Normalize -> Analyze Risks -> Build Graph -> Generate CycloneDX & SPDX -> Persist.
     """
 
     def __init__(self):
         self.python_parser = PythonParser()
         self.node_parser = NodeParser()
+        self.cargo_parser = CargoParser()
+        self.golang_parser = GolangParser()
         self.explanation_service = RiskExplanationService()
 
     def scan_archive(self, zip_path: Path | str, project_name: str, file_size_bytes: int = 0) -> Dict[str, Any]:
@@ -69,6 +74,12 @@ class ScannerService:
                 raw_dependencies.extend(parsed)
             elif self.node_parser.can_parse(filename):
                 parsed = self.node_parser.parse(file_path, rel_path)
+                raw_dependencies.extend(parsed)
+            elif self.cargo_parser.can_parse(filename):
+                parsed = self.cargo_parser.parse(file_path, rel_path)
+                raw_dependencies.extend(parsed)
+            elif self.golang_parser.can_parse(filename):
+                parsed = self.golang_parser.parse(file_path, rel_path)
                 raw_dependencies.extend(parsed)
 
         # 3. Normalize dependencies & PURLs

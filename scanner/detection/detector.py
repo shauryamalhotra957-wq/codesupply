@@ -1,4 +1,4 @@
-import os
+﻿import os
 from pathlib import Path
 from typing import Dict, List, Set
 
@@ -14,6 +14,8 @@ IGNORE_DIRS = {
     ".mypy_cache",
     "dist",
     "build",
+    "target",
+    "vendor",
     ".tox",
     ".idea",
     ".vscode",
@@ -26,6 +28,10 @@ MANIFEST_ECOSYSTEM_MAP = {
     "setup.py": "pypi",
     "package.json": "npm",
     "package-lock.json": "npm",
+    "Cargo.toml": "cargo",
+    "Cargo.lock": "cargo",
+    "go.mod": "golang",
+    "go.sum": "golang",
 }
 
 
@@ -82,6 +88,10 @@ class ProjectDetector:
                     ecosystem = "npm"
                 elif lower_name == "package-lock.json":
                     ecosystem = "npm"
+                elif lower_name == "cargo.toml" or lower_name == "cargo.lock":
+                    ecosystem = "cargo"
+                elif lower_name == "go.mod" or lower_name == "go.sum":
+                    ecosystem = "golang"
 
                 if ecosystem:
                     detected_ecosystems.add(ecosystem)
