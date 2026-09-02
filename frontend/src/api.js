@@ -1,4 +1,4 @@
-const API_BASE = '/api/projects';
+﻿const API_BASE = '/api/projects';
 
 export async function listProjects() {
   const res = await fetch(API_BASE);
@@ -66,8 +66,15 @@ export async function getProjectSbom(projectId) {
   return res.json();
 }
 
+export async function getProjectSpdx(projectId) {
+  const res = await fetch(`${API_BASE}/${projectId}/spdx`);
+  if (!res.ok) throw new Error('Failed to fetch SPDX SBOM');
+  return res.json();
+}
+
 export function getExportUrl(projectId, type) {
   if (type === 'cyclonedx') return `${API_BASE}/${projectId}/export/cyclonedx`;
+  if (type === 'spdx') return `${API_BASE}/${projectId}/export/spdx`;
   if (type === 'csv') return `${API_BASE}/${projectId}/export/csv`;
   if (type === 'report') return `${API_BASE}/${projectId}/report`;
   return `${API_BASE}/${projectId}`;
