@@ -1,0 +1,2 @@
+# Conflicting dependency requirements
+urllib3<1.27.0

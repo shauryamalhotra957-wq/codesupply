@@ -1,0 +1,7 @@
+# Intentionally broken and misconfigured dependencies for CodeSupply anomaly demonstration
+requests
+flask
+urllib3>=2.0.0
+pycrypto==2.6.1
+requests==2.31.0
+git+https://github.com/example/custom-tool.git@main#egg=custom-tool
