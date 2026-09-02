@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { 
   ShieldCheck, 
   LayoutDashboard, 
@@ -8,7 +8,8 @@ import {
   Download, 
   UploadCloud, 
   PlayCircle,
-  FolderGit2
+  FolderGit2,
+  GitCompare
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -17,14 +18,15 @@ export default function Navbar({
   activeProject, 
   projectsList, 
   onSelectProject, 
-  onQuickDemo 
+  onQuickDemo,
+  onOpenCompare
 }) {
   const tabs = [
     { id: 'landing', label: 'Upload & Demo', icon: UploadCloud },
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, disabled: !activeProject },
     { id: 'graph', label: 'Dependency Graph', icon: Network, disabled: !activeProject },
     { id: 'components', label: 'Components', icon: Layers, disabled: !activeProject },
-    { id: 'findings', label: 'Risk Findings', icon: AlertTriangle, disabled: !activeProject, badge: activeProject?.findings_count },
+    { id: 'findings', label: 'Risk & CVEs', icon: AlertTriangle, disabled: !activeProject, badge: activeProject?.findings_count },
     { id: 'export', label: 'Export & SBOM', icon: Download, disabled: !activeProject },
   ];
 
@@ -82,8 +84,19 @@ export default function Navbar({
             })}
           </nav>
 
-          {/* Right Action: Active Project Switcher & Quick Demo */}
-          <div className="flex items-center space-x-3">
+          {/* Right Action: Compare SBOMs, Active Project Switcher & Quick Demo */}
+          <div className="flex items-center space-x-2.5">
+            {projectsList.length >= 2 && (
+              <button
+                onClick={onOpenCompare}
+                className="hidden sm:flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-indigo-500/50 px-3 py-2 rounded-lg text-xs font-semibold transition"
+                title="Compare two SBOM project scans"
+              >
+                <GitCompare className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Compare SBOMs</span>
+              </button>
+            )}
+
             {projectsList.length > 0 && (
               <div className="relative">
                 <select
@@ -106,9 +119,9 @@ export default function Navbar({
 
             <button
               onClick={onQuickDemo}
-              className="hidden lg:flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-indigo-500/30 hover:border-indigo-500/60 px-3 py-2 rounded-lg text-xs font-semibold transition"
+              className="hidden lg:flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow-md shadow-indigo-600/20"
             >
-              <PlayCircle className="w-4 h-4 text-indigo-400" />
+              <PlayCircle className="w-4 h-4" />
               <span>1-Click Demo</span>
             </button>
           </div>

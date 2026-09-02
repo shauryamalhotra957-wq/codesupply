@@ -8,6 +8,7 @@ import FindingsView from './components/FindingsView';
 import ExportView from './components/ExportView';
 import ComponentDrawer from './components/ComponentDrawer';
 import ScanProgressModal from './components/ScanProgressModal';
+import SbomDiffModal from './components/SbomDiffModal';
 import { 
   listProjects, 
   uploadProjectArchive, 
@@ -27,6 +28,7 @@ export default function App() {
   const [findings, setFindings] = useState([]);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [scanProjectName, setScanProjectName] = useState('');
   const [globalError, setGlobalError] = useState('');
 
@@ -120,6 +122,7 @@ export default function App() {
         projectsList={projectsList}
         onSelectProject={handleSelectProject}
         onQuickDemo={() => handleLoadDemo('python-project')}
+        onOpenCompare={() => setIsDiffModalOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -186,6 +189,13 @@ export default function App() {
       <ScanProgressModal
         isOpen={isScanning}
         projectName={scanProjectName}
+      />
+
+      {/* SBOM Comparison & Drift Modal */}
+      <SbomDiffModal
+        currentProject={activeProject}
+        isOpen={isDiffModalOpen}
+        onClose={() => setIsDiffModalOpen(false)}
       />
 
       {/* Footer */}

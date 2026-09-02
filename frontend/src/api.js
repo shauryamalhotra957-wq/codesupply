@@ -1,4 +1,4 @@
-﻿const API_BASE = '/api/projects';
+const API_BASE = '/api/projects';
 
 export async function listProjects() {
   const res = await fetch(API_BASE);
@@ -69,6 +69,18 @@ export async function getProjectSbom(projectId) {
 export async function getProjectSpdx(projectId) {
   const res = await fetch(`${API_BASE}/${projectId}/spdx`);
   if (!res.ok) throw new Error('Failed to fetch SPDX SBOM');
+  return res.json();
+}
+
+export async function getProjectVulnerabilities(projectId) {
+  const res = await fetch(`${API_BASE}/${projectId}/vulnerabilities`);
+  if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
+  return res.json();
+}
+
+export async function compareProjects(baseId, targetId) {
+  const res = await fetch(`${API_BASE}/${baseId}/compare/${targetId}`);
+  if (!res.ok) throw new Error('Failed to compare SBOM projects');
   return res.json();
 }
 

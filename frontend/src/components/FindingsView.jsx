@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { 
   ShieldAlert, 
   AlertTriangle, 
@@ -6,10 +6,13 @@ import {
   Info, 
   Search, 
   CheckCircle2, 
-  ExternalLink,
-  Wrench,
-  FileSearch,
-  ArrowRight
+  ExternalLink, 
+  Wrench, 
+  FileSearch, 
+  ArrowRight,
+  Copy,
+  Check,
+  Zap
 } from 'lucide-react';
 
 export default function FindingsView({ 
@@ -20,6 +23,7 @@ export default function FindingsView({
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   const counts = useMemo(() => {
     return {
@@ -53,6 +57,12 @@ export default function FindingsView({
     });
   }, [findings, search, severityFilter, categoryFilter]);
 
+  const handleCopyFix = (text, idx) => {
+    navigator.clipboard.writeText(text);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header & Metrics */}
@@ -60,61 +70,61 @@ export default function FindingsView({
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center space-x-2.5">
             <ShieldAlert className="w-6 h-6 text-red-400" />
-            <span>Supply Chain Risk & Anomaly Intelligence</span>
+            <span>Supply-Chain Anomalies & CVE Findings</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Deterministic anomaly detection powered by CodeSupply Risk Engine & RiskExplanationService
+            Deterministic risk detection, version pinning hygiene, CISA KEV exploitation markers, and recommended fixes.
           </p>
         </div>
 
-        {/* Severity Metric Tiles */}
+        {/* Severity Metric Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div 
+          <button 
             onClick={() => setSeverityFilter('all')}
-            className={`p-4 rounded-xl border cursor-pointer transition ${
+            className={`p-4 rounded-xl border text-left transition ${
               severityFilter === 'all' ? 'bg-slate-800 border-indigo-500' : 'bg-slate-900 border-slate-800 hover:border-slate-700'
             }`}
           >
-            <span className="text-xs text-slate-400 block mb-1">All Anomalies</span>
-            <span className="text-2xl font-extrabold text-white">{counts.total}</span>
-          </div>
+            <span className="text-xs text-slate-400 font-semibold uppercase">Total Anomalies</span>
+            <div className="text-2xl font-bold text-white mt-1">{counts.total}</div>
+          </button>
 
-          <div 
+          <button 
             onClick={() => setSeverityFilter('high')}
-            className={`p-4 rounded-xl border cursor-pointer transition ${
-              severityFilter === 'high' ? 'bg-red-950/40 border-red-500' : 'bg-slate-900 border-slate-800 hover:border-red-900/50'
+            className={`p-4 rounded-xl border text-left transition ${
+              severityFilter === 'high' ? 'bg-red-950/40 border-red-500' : 'bg-slate-900 border-slate-800 hover:border-red-900/40'
             }`}
           >
-            <span className="text-xs text-red-400 block mb-1">High Severity</span>
-            <span className="text-2xl font-extrabold text-red-400">{counts.high}</span>
-          </div>
+            <span className="text-xs text-red-400 font-semibold uppercase">Critical / High</span>
+            <div className="text-2xl font-bold text-red-400 mt-1">{counts.high}</div>
+          </button>
 
-          <div 
+          <button 
             onClick={() => setSeverityFilter('medium')}
-            className={`p-4 rounded-xl border cursor-pointer transition ${
-              severityFilter === 'medium' ? 'bg-amber-950/40 border-amber-500' : 'bg-slate-900 border-slate-800 hover:border-amber-900/50'
+            className={`p-4 rounded-xl border text-left transition ${
+              severityFilter === 'medium' ? 'bg-amber-950/40 border-amber-500' : 'bg-slate-900 border-slate-800 hover:border-amber-900/40'
             }`}
           >
-            <span className="text-xs text-amber-400 block mb-1">Medium Severity</span>
-            <span className="text-2xl font-extrabold text-amber-400">{counts.medium}</span>
-          </div>
+            <span className="text-xs text-amber-400 font-semibold uppercase">Medium Risk</span>
+            <div className="text-2xl font-bold text-amber-400 mt-1">{counts.medium}</div>
+          </button>
 
-          <div 
+          <button 
             onClick={() => setSeverityFilter('low')}
-            className={`p-4 rounded-xl border cursor-pointer transition ${
-              severityFilter === 'low' ? 'bg-blue-950/40 border-blue-500' : 'bg-slate-900 border-slate-800 hover:border-blue-900/50'
+            className={`p-4 rounded-xl border text-left transition ${
+              severityFilter === 'low' ? 'bg-blue-950/40 border-blue-500' : 'bg-slate-900 border-slate-800 hover:border-blue-900/40'
             }`}
           >
-            <span className="text-xs text-blue-400 block mb-1">Low / Info</span>
-            <span className="text-2xl font-extrabold text-blue-400">{counts.low}</span>
-          </div>
+            <span className="text-xs text-blue-400 font-semibold uppercase">Low / Hygiene</span>
+            <div className="text-2xl font-bold text-blue-400 mt-1">{counts.low}</div>
+          </button>
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      {/* Filter and Search Bar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="relative w-full md:w-96">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
             value={search}
@@ -164,6 +174,8 @@ export default function FindingsView({
           filteredFindings.map((finding, idx) => {
             const isHigh = finding.severity === 'HIGH' || finding.severity === 'CRITICAL';
             const isMed = finding.severity === 'MEDIUM';
+            const isCve = finding.category === 'Vulnerability' || finding.title?.includes('CVE-');
+            const isKev = finding.title?.includes('CISA KEV');
 
             const compObj = components.find(
               c => c.name.toLowerCase() === finding.component_name?.toLowerCase()
@@ -178,13 +190,19 @@ export default function FindingsView({
               >
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                  <div className="flex items-center space-x-2.5">
+                  <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">
                     <span className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase ${
                       isHigh ? 'bg-red-500/20 text-red-400 border border-red-500/30' : isMed ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                     }`}>
                       {finding.severity}
                     </span>
                     <span className="text-xs text-slate-400 font-semibold">• {finding.category}</span>
+                    {isKev && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center space-x-1">
+                        <Zap className="w-3 h-3 text-amber-400" />
+                        <span>CISA KEV EXPLOITED</span>
+                      </span>
+                    )}
                     <h3 className="text-sm font-bold text-white">{finding.title}</h3>
                   </div>
 
@@ -204,7 +222,7 @@ export default function FindingsView({
                   <div className="space-y-1">
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center space-x-1.5">
                       <FileSearch className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>Manifest Evidence</span>
+                      <span>Manifest & CVE Evidence</span>
                     </span>
                     <div className="font-mono text-xs text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800 break-all select-all">
                       {finding.evidence}
@@ -213,25 +231,36 @@ export default function FindingsView({
                 )}
 
                 {/* Contextual Explanation */}
-                <div className="space-y-1">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Supply-Chain Risk Analysis
-                  </span>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {finding.explanation}
-                  </p>
-                </div>
-
-                {/* Actionable Remediation */}
-                {finding.recommendation && (
-                  <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-xl p-3.5 space-y-1">
-                    <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
-                      <Wrench className="w-3.5 h-3.5" />
-                      <span>Recommended Remediation</span>
+                {finding.explanation && (
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      Supply-Chain Risk Analysis
                     </span>
-                    <p className="text-xs text-emerald-300 font-medium leading-relaxed">
-                      {finding.recommendation}
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {finding.explanation}
                     </p>
+                  </div>
+                )}
+
+                {/* Actionable Remediation & 1-Click Copy */}
+                {finding.recommendation && (
+                  <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-xl p-3.5 flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+                        <Wrench className="w-3.5 h-3.5" />
+                        <span>Recommended Remediation</span>
+                      </span>
+                      <p className="text-xs text-emerald-300 font-medium leading-relaxed font-mono">
+                        {finding.recommendation}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCopyFix(finding.recommendation, idx)}
+                      className="py-1.5 px-3 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition shrink-0"
+                    >
+                      {copiedIndex === idx ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedIndex === idx ? 'Copied' : 'Copy Fix'}</span>
+                    </button>
                   </div>
                 )}
               </div>
