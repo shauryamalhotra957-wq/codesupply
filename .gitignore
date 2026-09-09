@@ -1,37 +1,27 @@
-﻿# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-dist/
-*.egg-info/
-
-# Virtual Environments
-venv/
-.venv/
-backend/venv/
-
-# Pytest
-.pytest_cache/
-.coverage
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-backend/codesupply.db
-
-# Node / Frontend
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.cache/
-
-# OS / IDE
-.vscode/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.env.local
+*.db
+*.db-journal
+.next/
+dist/
+build/
+target/
+tmp/
+*.tmp
 .idea/
+.vscode/
+*.swp
+*.swo
 .DS_Store
 Thumbs.db
-.env
+*.log
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+*.egg-info/
