@@ -9,7 +9,6 @@ from pathlib import Path
 import httpx
 from sqlalchemy import select
 
-from app.api.routes import _get_stages, _scan_to_response
 from app.api.ws import manager
 from app.core.config import Settings, get_settings
 from app.core.database import async_session_factory, init_db
@@ -78,6 +77,8 @@ class ScanWorker:
         self.risk_engine = RiskEngine()
 
     async def _broadcast_scan(self, db, scan_id: str):
+        from app.api.routes import _get_stages, _scan_to_response
+
         try:
             # We must commit before reading to ensure latest state? No, we just modified the objects, but let's refresh or fetch.
             # actually we can just select it
