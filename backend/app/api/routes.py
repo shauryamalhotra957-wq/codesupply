@@ -8,12 +8,12 @@ import uuid
 import zipfile
 from pathlib import Path
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.ws import BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, manager
+from app.api.ws import manager
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.models.models import (
