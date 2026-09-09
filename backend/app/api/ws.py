@@ -1,9 +1,10 @@
-﻿import asyncio
 import logging
 from typing import Dict, List
+
 from fastapi import WebSocket
 
 logger = logging.getLogger("codesupply.ws")
+
 
 class ConnectionManager:
     def __init__(self):
@@ -34,8 +35,9 @@ class ConnectionManager:
                 except Exception as e:
                     logger.warning(f"Failed to send to websocket: {e}")
                     stale_connections.append(connection)
-            
+
             for stale in stale_connections:
                 self.disconnect(stale, scan_id)
+
 
 manager = ConnectionManager()

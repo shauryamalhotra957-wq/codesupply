@@ -1,4 +1,5 @@
 from typing import List
+
 from backend.services.risk_engine import Finding
 
 
@@ -77,14 +78,11 @@ class DeterministicExplanationProvider(BaseExplanationProvider):
                 f"The component '{name}' is widely recognized as deprecated, unmaintained, or superseded. "
                 "Unmaintained libraries do not receive security patches."
             )
-            finding.recommendation = (
-                f"Migrate from '{name}' to its actively maintained modern alternative as recommended in the evidence note."
-            )
+            finding.recommendation = f"Migrate from '{name}' to its actively maintained modern alternative as recommended in the evidence note."
 
         else:
             finding.explanation = (
-                f"A supply-chain hygiene anomaly was flagged for component '{name}'. "
-                "Review the manifest definition."
+                f"A supply-chain hygiene anomaly was flagged for component '{name}'. Review the manifest definition."
             )
             finding.recommendation = (
                 f"Review '{name}' configuration in your dependency manifests and verify its source integrity."

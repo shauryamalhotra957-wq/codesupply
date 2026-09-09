@@ -9,6 +9,8 @@ from pathlib import Path
 import httpx
 from sqlalchemy import select
 
+from app.api.routes import _get_stages, _scan_to_response
+from app.api.ws import manager
 from app.core.config import Settings, get_settings
 from app.core.database import async_session_factory, init_db
 from app.models.models import (
@@ -74,7 +76,6 @@ class ScanWorker:
         self.sbom_generator = CycloneDXGenerator()
         self.sbom_validator = SBOMValidator()
         self.risk_engine = RiskEngine()
-
 
     async def _broadcast_scan(self, db, scan_id: str):
         try:

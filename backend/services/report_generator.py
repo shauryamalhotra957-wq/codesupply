@@ -5,11 +5,9 @@ from typing import Any, Dict, List
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import inch
 from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -178,7 +176,11 @@ class ReportGenerator:
             story.append(Paragraph("No anomalies or security risks detected in project manifests.", body_style))
         else:
             for idx, f in enumerate(findings[:20], 1):  # Cap at top 20 for PDF readability
-                sev_color = "#dc2626" if f["severity"] in ("CRITICAL", "HIGH") else ("#d97706" if f["severity"] == "MEDIUM" else "#2563eb")
+                sev_color = (
+                    "#dc2626"
+                    if f["severity"] in ("CRITICAL", "HIGH")
+                    else ("#d97706" if f["severity"] == "MEDIUM" else "#2563eb")
+                )
                 item_content = [
                     Paragraph(
                         f"<b>#{idx} [{f['severity']}] {f['title']}</b> (<font color='{sev_color}'>{f['category']}</font>)",
@@ -189,7 +191,10 @@ class ReportGenerator:
                     Spacer(1, 2),
                     Paragraph(f"<b>Explanation:</b> {f.get('explanation', '')}", finding_body),
                     Spacer(1, 2),
-                    Paragraph(f"<b>Recommendation:</b> <font color='#15803d'>{f.get('recommendation', '')}</font>", finding_body),
+                    Paragraph(
+                        f"<b>Recommendation:</b> <font color='#15803d'>{f.get('recommendation', '')}</font>",
+                        finding_body,
+                    ),
                     Spacer(1, 6),
                 ]
                 story.append(KeepTogether(item_content))

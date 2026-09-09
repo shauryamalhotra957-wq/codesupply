@@ -1,11 +1,7 @@
 import json
-import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List
-
-from fastapi import APIRouter, File, HTTPException, Response, UploadFile
-from fastapi.responses import JSONResponse
+from typing import List
 
 from backend.database import DatabaseRepository
 from backend.models import (
@@ -17,6 +13,8 @@ from backend.models import (
 )
 from backend.services.report_generator import ReportGenerator
 from backend.services.scanner_service import ScannerService
+from fastapi import APIRouter, File, HTTPException, Response, UploadFile
+from fastapi.responses import JSONResponse
 from scanner.normalization.normalizer import NormalizedComponent
 from scanner.sbom.differ import SbomDiffer
 from scanner.sbom.spdx_generator import SPDXGenerator
@@ -266,9 +264,7 @@ def get_project_vulnerabilities(project_id: str):
 
     vulnerabilities = []
     for c in components:
-        matches = VulnerabilityEngine.match_component(
-            c.get("name", ""), c.get("version"), c.get("ecosystem", "")
-        )
+        matches = VulnerabilityEngine.match_component(c.get("name", ""), c.get("version"), c.get("ecosystem", ""))
         for m in matches:
             vulnerabilities.append(VulnerabilityModel(**m))
 
@@ -293,4 +289,3 @@ def compare_sbom_projects(base_project_id: str, target_project_id: str):
         target_components=target_components,
     )
     return diff_result
-

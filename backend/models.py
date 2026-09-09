@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -93,4 +94,3 @@ class SbomComparisonModel(BaseModel):
     new_vulnerabilities: List[Dict[str, Any]]
     resolved_vulnerabilities: List[Dict[str, Any]]
     net_vulnerability_delta: int
-

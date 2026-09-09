@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List
@@ -15,7 +15,6 @@ from scanner.parsers.node_parser import NodeParser
 from scanner.parsers.python_parser import PythonParser
 from scanner.relationships.graph_builder import DependencyGraphBuilder
 from scanner.sbom.cyclonedx_generator import CycloneDXGenerator
-from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractor
 
 
@@ -111,7 +110,9 @@ class ScannerService:
         # 7. Compute Summary Metrics
         direct_count = sum(1 for c in normalized_components if c.direct)
         transitive_count = sum(1 for c in normalized_components if not c.direct)
-        pinned_count = sum(1 for c in normalized_components if c.version and c.version not in ("unspecified", "unpinned", ""))
+        pinned_count = sum(
+            1 for c in normalized_components if c.version and c.version not in ("unspecified", "unpinned", "")
+        )
         unpinned_count = len(normalized_components) - pinned_count
 
         critical_f = sum(1 for f in enriched_findings if f.severity == "CRITICAL")

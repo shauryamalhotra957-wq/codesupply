@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from scanner.normalization.normalizer import NormalizedComponent
 from scanner.parsers.base import ParsedDependency
@@ -9,6 +9,7 @@ from scanner.security.vuln_engine import VulnerabilityEngine
 @dataclass
 class Finding:
     """Represents a deterministic security, hygiene, or supply-chain risk finding."""
+
     component_name: str
     severity: str  # CRITICAL, HIGH, MEDIUM, LOW, INFO
     category: str  # Version Pinning, Conflict, Duplicate, Supply Chain, Hygiene
@@ -148,7 +149,11 @@ class RiskEngine:
             matches = VulnerabilityEngine.match_component(comp.name, comp.version, comp.ecosystem)
             for vuln in matches:
                 kev_flag = " [CISA KEV EXPLOITED]" if vuln.get("cisa_kev") else ""
-                remed = f" Recommended fix: upgrade to {vuln.get('remediation_version')}." if vuln.get("remediation_version") else ""
+                remed = (
+                    f" Recommended fix: upgrade to {vuln.get('remediation_version')}."
+                    if vuln.get("remediation_version")
+                    else ""
+                )
                 findings.append(
                     Finding(
                         component_name=comp.name,

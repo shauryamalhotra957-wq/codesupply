@@ -102,6 +102,7 @@ def init_db():
             )
         """)
 
+
 # Initialize database on module load
 init_db()
 
@@ -200,7 +201,9 @@ class DatabaseRepository:
                 )
 
     @staticmethod
-    def save_sbom_and_graph(project_id: str, cyclonedx_dict: Dict[str, Any], graph_dict: Dict[str, Any], created_at: str):
+    def save_sbom_and_graph(
+        project_id: str, cyclonedx_dict: Dict[str, Any], graph_dict: Dict[str, Any], created_at: str
+    ):
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -242,7 +245,9 @@ class DatabaseRepository:
     def get_components(project_id: str) -> List[Dict[str, Any]]:
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM components WHERE project_id = ? ORDER BY direct DESC, name ASC", (project_id,))
+            cursor.execute(
+                "SELECT * FROM components WHERE project_id = ? ORDER BY direct DESC, name ASC", (project_id,)
+            )
             rows = cursor.fetchall()
             results = []
             for r in rows:

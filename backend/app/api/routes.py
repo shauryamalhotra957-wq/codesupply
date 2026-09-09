@@ -8,11 +8,12 @@ import uuid
 import zipfile
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.ws import BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, manager
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.models.models import (
@@ -820,8 +821,7 @@ async def health(db: AsyncSession = Depends(get_db)):
         version="1.0.0",
         database=db_status,
     )
-from fastapi import WebSocket, WebSocketDisconnect
-from app.api.ws import manager
+
 
 @router.websocket("/scans/{scan_id}/ws")
 async def websocket_scan_endpoint(websocket: WebSocket, scan_id: str):
@@ -832,6 +832,8 @@ async def websocket_scan_endpoint(websocket: WebSocket, scan_id: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket, scan_id)
+
+
 @router.get("/scans/{scan_id}/diff/{other_scan_id}")
 async def get_scan_diff(
     scan_id: str,
@@ -841,88 +843,75 @@ async def get_scan_diff(
     """Compare two scans and return differences in dependencies and vulnerabilities."""
     scan1 = await _get_scan_or_404(scan_id, db)
     scan2 = await _get_scan_or_404(other_scan_id, db)
-    
+
     # Get components
     c1_res = await db.execute(select(Component).where(Component.scan_id == scan_id))
     c2_res = await db.execute(select(Component).where(Component.scan_id == other_scan_id))
-    
+
     c1 = {f"{c.ecosystem}:{c.name}": c for c in c1_res.scalars().all()}
     c2 = {f"{c.ecosystem}:{c.name}": c for c in c2_res.scalars().all()}
-    
+
     added_components = []
     removed_components = []
     version_changes = []
-    
+
     for key, comp2 in c2.items():
         if key not in c1:
-            added_components.append({
-                "ecosystem": comp2.ecosystem,
-                "name": comp2.name,
-                "version": comp2.version,
-                "purl": comp2.purl
-            })
+            added_components.append(
+                {"ecosystem": comp2.ecosystem, "name": comp2.name, "version": comp2.version, "purl": comp2.purl}
+            )
         else:
             comp1 = c1[key]
             if comp1.version != comp2.version:
-                version_changes.append({
-                    "ecosystem": comp2.ecosystem,
-                    "name": comp2.name,
-                    "old_version": comp1.version,
-                    "new_version": comp2.version,
-                    "purl": comp2.purl
-                })
-                
+                version_changes.append(
+                    {
+                        "ecosystem": comp2.ecosystem,
+                        "name": comp2.name,
+                        "old_version": comp1.version,
+                        "new_version": comp2.version,
+                        "purl": comp2.purl,
+                    }
+                )
+
     for key, comp1 in c1.items():
         if key not in c2:
-            removed_components.append({
-                "ecosystem": comp1.ecosystem,
-                "name": comp1.name,
-                "version": comp1.version,
-                "purl": comp1.purl
-            })
-            
+            removed_components.append(
+                {"ecosystem": comp1.ecosystem, "name": comp1.name, "version": comp1.version, "purl": comp1.purl}
+            )
+
     # Get vulnerabilities
     v1_res = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
     v2_res = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == other_scan_id))
-    
+
     v1 = {f"{v.component_id}:{v.vuln_id}": v for v in v1_res.scalars().all()}
     v2 = {f"{v.component_id}:{v.vuln_id}": v for v in v2_res.scalars().all()}
-    
+
     added_vulns = []
     resolved_vulns = []
-    
+
     for key, vuln2 in v2.items():
         if key not in v1:
-            added_vulns.append({
-                "vuln_id": vuln2.vuln_id,
-                "severity": vuln2.severity,
-                "summary": vuln2.summary,
-            })
-            
+            added_vulns.append(
+                {
+                    "vuln_id": vuln2.vuln_id,
+                    "severity": vuln2.severity,
+                    "summary": vuln2.summary,
+                }
+            )
+
     for key, vuln1 in v1.items():
         if key not in v2:
-            resolved_vulns.append({
-                "vuln_id": vuln1.vuln_id,
-                "severity": vuln1.severity,
-                "summary": vuln1.summary,
-            })
+            resolved_vulns.append(
+                {
+                    "vuln_id": vuln1.vuln_id,
+                    "severity": vuln1.severity,
+                    "summary": vuln1.summary,
+                }
+            )
 
     return {
-        "base_scan": {
-            "id": scan1.id,
-            "created_at": scan1.created_at
-        },
-        "compare_scan": {
-            "id": scan2.id,
-            "created_at": scan2.created_at
-        },
-        "components": {
-            "added": added_components,
-            "removed": removed_components,
-            "version_changed": version_changes
-        },
-        "vulnerabilities": {
-            "added": added_vulns,
-            "resolved": resolved_vulns
-        }
+        "base_scan": {"id": scan1.id, "created_at": scan1.created_at},
+        "compare_scan": {"id": scan2.id, "created_at": scan2.created_at},
+        "components": {"added": added_components, "removed": removed_components, "version_changed": version_changes},
+        "vulnerabilities": {"added": added_vulns, "resolved": resolved_vulns},
     }
