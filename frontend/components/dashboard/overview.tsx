@@ -11,7 +11,8 @@ import {
   AlertTriangle, 
   HelpCircle,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Activity
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -23,7 +24,8 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid
+  CartesianGrid,
+  Legend
 } from 'recharts';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -46,16 +48,25 @@ const ECOSYSTEM_COLORS = {
   cargo: '#dea584'
 };
 
+const VULN_COLORS = {
+  CRITICAL: '#b91c1c',
+  HIGH: '#ef4444',
+  MODERATE: '#f59e0b',
+  LOW: '#3b82f6',
+  UNKNOWN: '#9ca3af'
+};
+
 export function DashboardOverview({ scanId }: { scanId: string }) {
   const { scan, summary, isLoading } = useScan(scanId);
 
   if (isLoading || !summary) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Skeleton className="h-80 rounded-xl" />
           <Skeleton className="h-80 rounded-xl" />
           <Skeleton className="h-80 rounded-xl" />
         </div>
@@ -72,7 +83,7 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
     
   const vulnData = Object.entries(summary.vulnerabilities_by_severity)
     .filter(([_, count]) => count > 0)
-    .map(([name, value]) => ({ name, value }));
+    .map(([name, value]) => ({ name: name.toUpperCase(), count: value }));
 
   const downloadSbom = async () => {
     try {
@@ -89,6 +100,15 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
     }
   };
 
+  const calculateRiskGrade = () => {
+    if (summary.total_high_critical > 0) return { grade: 'F', color: 'text-red-600', text: 'Critical Risk' };
+    if (summary.total_vulnerabilities > summary.total_high_critical) return { grade: 'D', color: 'text-amber-500', text: 'Moderate Risk' };
+    if (summary.total_unknown_versions > 0) return { grade: 'B', color: 'text-blue-500', text: 'Low Risk' };
+    return { grade: 'A', color: 'text-green-500', text: 'Excellent' };
+  };
+
+  const riskGrade = calculateRiskGrade();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -99,7 +119,12 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <Card className="flex flex-col items-center justify-center p-4">
+          <div className="text-sm font-medium text-muted-foreground mb-1">Risk Score</div>
+          <div className={`text-5xl font-black ${riskGrade.color}`}>{riskGrade.grade}</div>
+          <div className="text-xs text-muted-foreground mt-1">{riskGrade.text}</div>
+        </Card>
         <MetricCard
           title="Total Components"
           value={summary.total_components}
@@ -155,34 +180,46 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-medium">Risk Distribution</CardTitle>
           </CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-72 flex flex-col">
             {riskData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={riskData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {riskData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={RISK_COLORS[entry.name as keyof typeof RISK_COLORS] || RISK_COLORS.unknown} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    formatter={(value: number) => [`${value} components`, 'Count']}
-                    labelFormatter={(label: string) => label.charAt(0).toUpperCase() + label.slice(1) + ' Risk'}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={riskData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {riskData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={RISK_COLORS[entry.name as keyof typeof RISK_COLORS] || RISK_COLORS.unknown} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        formatter={(value: number) => [`${value} components`, 'Count']}
+                        labelFormatter={(label: string) => label.charAt(0).toUpperCase() + label.slice(1) + ' Risk'}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 mt-2">
+                  {riskData.map(entry => (
+                    <div key={entry.name} className="flex items-center gap-1 text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: RISK_COLORS[entry.name as keyof typeof RISK_COLORS] || RISK_COLORS.unknown }} />
+                      <span className="capitalize">{entry.name}: {entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">No risk data</div>
             )}
@@ -193,28 +230,65 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
           <CardHeader>
             <CardTitle className="text-lg font-medium">Ecosystems</CardTitle>
           </CardHeader>
-          <CardContent className="h-72">
+          <CardContent className="h-72 flex flex-col">
             {ecosystemData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={ecosystemData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {ecosystemData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={ECOSYSTEM_COLORS[entry.name as keyof typeof ECOSYSTEM_COLORS] || '#8884d8'} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip formatter={(value: number) => [`${value} components`, 'Count']} />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                <div className="flex-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={ecosystemData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {ecosystemData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={ECOSYSTEM_COLORS[entry.name as keyof typeof ECOSYSTEM_COLORS] || '#8884d8'} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip formatter={(value: number) => [`${value} components`, 'Count']} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 mt-2">
+                  {ecosystemData.map(entry => (
+                    <div key={entry.name} className="flex items-center gap-1 text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ECOSYSTEM_COLORS[entry.name as keyof typeof ECOSYSTEM_COLORS] || '#8884d8' }} />
+                      <span className="capitalize">{entry.name}: {entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">No ecosystem data</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg font-medium">Vulnerabilities</CardTitle>
+          </CardHeader>
+          <CardContent className="h-72">
+            {vulnData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={vulnData} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                  <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {vulnData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={VULN_COLORS[entry.name as keyof typeof VULN_COLORS] || VULN_COLORS.UNKNOWN} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-muted-foreground">No vulnerabilities found</div>
             )}
           </CardContent>
         </Card>

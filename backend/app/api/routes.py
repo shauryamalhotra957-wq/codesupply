@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import uuid
 import zipfile
@@ -64,6 +65,11 @@ router = APIRouter(prefix="/api")
 
 
 async def _get_scan_or_404(scan_id: str, db: AsyncSession) -> Scan:
+    if not re.fullmatch(r"^[0-9a-fA-F]{32}$", scan_id):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "INVALID_SCAN_ID", "message": "Scan ID must be a 32-character hex string."}},
+        )
     result = await db.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalar_one_or_none()
     if not scan:
@@ -762,6 +768,12 @@ async def retry_scan(
     settings: Settings = Depends(get_settings),
 ):
     """Retry a failed scan."""
+    if not re.fullmatch(r"^[0-9a-fA-F]{32}$", scan_id):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": {"code": "INVALID_SCAN_ID", "message": "Scan ID must be a 32-character hex string."}},
+        )
+
     scan_result = await db.execute(select(Scan).where(Scan.id == scan_id))
     scan = scan_result.scalar_one_or_none()
     if not scan:

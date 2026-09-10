@@ -57,6 +57,18 @@ class ArchiveService:
         Raises:
             ArchiveSecurityError: On any security validation failure
         """
+        # Enforce strict file extension whitelist (.zip only)
+        if not file_path.name.lower().endswith(".zip"):
+            raise ArchiveSecurityError("INVALID_EXTENSION", "Only .zip files are allowed.")
+
+        # Magic bytes validation (ZIP signature PK\x03\x04)
+        with open(file_path, "rb") as f:
+            magic = f.read(4)
+            if magic != b"PK\x03\x04":
+                raise ArchiveSecurityError(
+                    "INVALID_SIGNATURE", "Invalid file signature. File is not a valid ZIP archive."
+                )
+
         # File size check
         file_size = file_path.stat().st_size
         max_bytes = self.settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
@@ -81,11 +93,11 @@ class ArchiveService:
             with zipfile.ZipFile(file_path, "r") as zf:
                 infos = zf.infolist()
 
-                # File count check
-                if len(infos) > self.settings.MAX_ARCHIVE_FILES:
+                # File count check (max 10000 files)
+                if len(infos) > 10000:
                     raise ArchiveSecurityError(
                         "TOO_MANY_FILES",
-                        f"Archive contains {len(infos)} entries, exceeding the {self.settings.MAX_ARCHIVE_FILES} file limit.",
+                        f"Archive contains {len(infos)} entries, exceeding the 10000 file limit.",
                     )
 
                 # Uncompressed size check (archive bomb protection)
@@ -106,6 +118,12 @@ class ArchiveService:
 
                 # Validate each entry
                 for info in infos:
+                    # Maximum individual file size limit (50MB per file inside archive)
+                    if info.file_size > 50 * 1024 * 1024:
+                        raise ArchiveSecurityError(
+                            "FILE_TOO_LARGE",
+                            f"File '{info.filename}' in archive exceeds the 50MB individual file size limit.",
+                        )
                     self._validate_entry(info, extraction_path)
 
                 # Safe to extract

@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.middleware import RateLimiterMiddleware, SecurityHeadersMiddleware
 from app.api.routes import router
 from app.core.database import init_db
 from app.services.archive import ArchiveSecurityError
@@ -33,6 +34,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(RateLimiterMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
