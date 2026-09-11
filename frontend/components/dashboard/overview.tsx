@@ -120,6 +120,13 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
     window.open(`${apiBase}/scans/${scanId}/report/html`, '_blank');
   };
 
+  const calculateRiskGrade = () => {
+    if (summary.total_high_critical > 0) return { grade: 'F', color: 'text-red-600', text: 'Critical Risk' };
+    if (summary.total_vulnerabilities > summary.total_high_critical) return { grade: 'D', color: 'text-amber-500', text: 'Moderate Risk' };
+    if (summary.total_unknown_versions > 0) return { grade: 'B', color: 'text-blue-500', text: 'Low Risk' };
+    return { grade: 'A', color: 'text-green-500', text: 'Excellent' };
+  };
+
   const riskGrade = calculateRiskGrade();
 
   return (
