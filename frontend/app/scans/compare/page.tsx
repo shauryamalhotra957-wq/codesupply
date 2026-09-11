@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -17,6 +17,9 @@ function ComparePageContent() {
   const [diff, setDiff] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAllAdded, setShowAllAdded] = useState(false);
+  const [showAllChanged, setShowAllChanged] = useState(false);
+  const [showAllRemoved, setShowAllRemoved] = useState(false);
 
   useEffect(() => {
     if (!baseId || !compareId) {
@@ -36,6 +39,10 @@ function ComparePageContent() {
   if (!diff) return null;
 
   const { components, vulnerabilities } = diff;
+
+  const displayedAdded = showAllAdded ? components.added : components.added.slice(0, 10);
+  const displayedChanged = showAllChanged ? components.version_changed : components.version_changed.slice(0, 10);
+  const displayedRemoved = showAllRemoved ? components.removed : components.removed.slice(0, 10);
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -67,12 +74,21 @@ function ComparePageContent() {
                   <Plus className="h-4 w-4 mr-1" /> Added ({components.added.length})
                 </h3>
                 <div className="space-y-1">
-                  {components.added.slice(0, 10).map((c: any, i: number) => (
+                  {displayedAdded.map((c: any, i: number) => (
                     <div key={i} className="text-sm p-2 bg-green-500/10 rounded border border-green-500/20">
                       <span className="font-mono">{c.ecosystem}:{c.name}</span> <Badge variant="outline" className="ml-2">{c.version}</Badge>
                     </div>
                   ))}
-                  {components.added.length > 10 && <div className="text-xs text-muted-foreground">+ {components.added.length - 10} more</div>}
+                  {components.added.length > 10 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllAdded(!showAllAdded)}
+                      className="text-xs text-muted-foreground hover:text-foreground mt-1 h-7 px-2"
+                    >
+                      {showAllAdded ? "Show less" : `+ ${components.added.length - 10} more (Show all)`}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -83,7 +99,7 @@ function ComparePageContent() {
                   <ArrowRight className="h-4 w-4 mr-1" /> Version Changed ({components.version_changed.length})
                 </h3>
                 <div className="space-y-1">
-                  {components.version_changed.slice(0, 10).map((c: any, i: number) => (
+                  {displayedChanged.map((c: any, i: number) => (
                     <div key={i} className="text-sm p-2 bg-blue-500/10 rounded border border-blue-500/20 flex items-center gap-2">
                       <span className="font-mono">{c.ecosystem}:{c.name}</span>
                       <Badge variant="outline">{c.old_version}</Badge>
@@ -91,7 +107,16 @@ function ComparePageContent() {
                       <Badge variant="default">{c.new_version}</Badge>
                     </div>
                   ))}
-                  {components.version_changed.length > 10 && <div className="text-xs text-muted-foreground">+ {components.version_changed.length - 10} more</div>}
+                  {components.version_changed.length > 10 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllChanged(!showAllChanged)}
+                      className="text-xs text-muted-foreground hover:text-foreground mt-1 h-7 px-2"
+                    >
+                      {showAllChanged ? "Show less" : `+ ${components.version_changed.length - 10} more (Show all)`}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -102,12 +127,21 @@ function ComparePageContent() {
                   <Minus className="h-4 w-4 mr-1" /> Removed ({components.removed.length})
                 </h3>
                 <div className="space-y-1">
-                  {components.removed.slice(0, 10).map((c: any, i: number) => (
+                  {displayedRemoved.map((c: any, i: number) => (
                     <div key={i} className="text-sm p-2 bg-red-500/10 rounded border border-red-500/20">
                       <span className="font-mono">{c.ecosystem}:{c.name}</span> <Badge variant="outline" className="ml-2 text-muted-foreground line-through">{c.version}</Badge>
                     </div>
                   ))}
-                  {components.removed.length > 10 && <div className="text-xs text-muted-foreground">+ {components.removed.length - 10} more</div>}
+                  {components.removed.length > 10 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllRemoved(!showAllRemoved)}
+                      className="text-xs text-muted-foreground hover:text-foreground mt-1 h-7 px-2"
+                    >
+                      {showAllRemoved ? "Show less" : `+ ${components.removed.length - 10} more (Show all)`}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

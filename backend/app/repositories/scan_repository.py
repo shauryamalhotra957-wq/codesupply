@@ -191,12 +191,35 @@ class ScanRepository:
         return result.scalars().all()
 
     async def get_scan_summary(self, scan_id: str) -> dict[str, Any]:
+        eco_result = await self.session.execute(
+            select(Component.ecosystem, func.count()).where(Component.scan_id == scan_id).group_by(Component.ecosystem)
+        )
+        components_by_ecosystem = dict(eco_result.all())
+
+        risk_result = await self.session.execute(
+            select(Component.risk_level, func.count()).where(Component.scan_id == scan_id).group_by(Component.risk_level)
+        )
+        components_by_risk = dict(risk_result.all())
+
+        sev_result = await self.session.execute(
+            select(VulnerabilityFinding.severity, func.count())
+            .where(VulnerabilityFinding.scan_id == scan_id)
+            .group_by(VulnerabilityFinding.severity)
+        )
+        vulnerabilities_by_severity = dict(sev_result.all())
+
+        type_result = await self.session.execute(
+            select(Component.dependency_type, func.count())
+            .where(Component.scan_id == scan_id)
+            .group_by(Component.dependency_type)
+        )
+        components_by_type = dict(type_result.all())
+
         return {
-            "components_by_ecosystem": {},
-            "risk_distribution": {},
-            "vulnerability_distribution": {},
-            "dependency_type_distribution": {},
-            "coverage_info": {},
-            "sbom_status": "none",
-            "intelligence_status": "none",
+            "components_by_ecosystem": components_by_ecosystem,
+            "risk_distribution": components_by_risk,
+            "vulnerability_distribution": vulnerabilities_by_severity,
+            "dependency_type_distribution": components_by_type,
+            "sbom_status": "complete",
+            "intelligence_status": "live",
         }

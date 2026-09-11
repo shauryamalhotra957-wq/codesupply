@@ -16,49 +16,49 @@ To prevent resource exhaustion, the API enforces rate limits:
 
 ### 1. Upload & Scan Archive
 
-**Endpoint:** `POST /api/v1/scan/archive`
+**Endpoint:** `POST /api/scans` (or `POST /api/scans/sample` for instant demo project)
 
-Uploads a zip or tar archive for static supply chain analysis.
+Uploads a ZIP archive for static supply chain analysis.
 
 - **Content-Type**: `multipart/form-data`
 - **Parameters**: 
-  - `file`: The archive file.
+  - `file`: The archive file (.zip).
 
-**Response (202 Accepted)**
+**Response (201 Created)**
 ```json
 {
-  "scan_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "processing",
-  "message": "Archive uploaded successfully. Connect to WebSocket for real-time status."
+  "id": "550e8400e29b41d4a716446655440000",
+  "status": "queued",
+  "filename": "project.zip",
+  "file_size": 1048576,
+  "created_at": "2026-09-11T12:00:00Z",
+  "stages": []
 }
 ```
 
-### 2. Get Scan Status / Results
+### 2. Get Scan Status & Summary
 
-**Endpoint:** `GET /api/v1/scan/{scan_id}`
+- **Scan Details:** `GET /api/scans/{scan_id}`
+- **Scan Summary (Metrics & Intelligence):** `GET /api/scans/{scan_id}/summary`
+- **Components Inventory:** `GET /api/scans/{scan_id}/components` (supports `?q=...&risk_level=...&ecosystem=...&page=...&per_page=...`)
+- **Dependency Graph (DAG):** `GET /api/scans/{scan_id}/graph`
+- **Vulnerability Findings:** `GET /api/scans/{scan_id}/vulnerabilities`
+- **Scan History:** `GET /api/scans` (supports pagination `?limit=50&offset=0`)
 
-Retrieves the risk assessment and vulnerability report for a completed scan.
-
-- **Path Parameters**: 
-  - `scan_id` (string): The UUID of the scan.
-
-**Response (200 OK)**
+**Response (200 OK - GET /api/scans/{scan_id}/summary)**
 ```json
 {
-  "scan_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "completed",
-  "risk_score": 85,
-  "risk_level": "HIGH",
-  "ecosystems_found": ["npm", "python"],
-  "vulnerabilities": [
-    {
-      "id": "GHSA-xxxx-yyyy-zzzz",
-      "package": "lodash",
-      "version": "4.17.15",
-      "severity": "HIGH",
-      "cvss": 7.5
-    }
-  ]
+  "scan_id": "550e8400e29b41d4a716446655440000",
+  "total_components": 42,
+  "total_vulnerabilities": 3,
+  "total_high_critical": 2,
+  "total_unknown_versions": 0,
+  "components_by_ecosystem": {"npm": 28, "pypi": 14},
+  "components_by_risk": {"critical": 1, "high": 1, "low": 40},
+  "components_by_type": {"direct": 12, "transitive": 30},
+  "vulnerabilities_by_severity": {"CRITICAL": 1, "HIGH": 1, "MODERATE": 1},
+  "sbom_valid": true,
+  "intelligence_status": "live"
 }
 ```
 
@@ -114,9 +114,9 @@ Compares two scans to identify added/removed components, version bumps, and reso
 }
 ```
 
-### 5. Real-time Scan Progress (WebSocket)
+### 6. Real-time Scan Progress (WebSocket)
 
-**Endpoint:** `WS /api/v1/ws/scan/{scan_id}`
+**Endpoint:** `WS /api/scans/{scan_id}/ws`
 
 Connect to this WebSocket endpoint to receive real-time updates as the scan progresses through extraction, parsing, OSV querying, and scoring.
 
