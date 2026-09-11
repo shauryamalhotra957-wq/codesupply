@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 # 🛡️ CodeSupply
 
@@ -44,7 +44,7 @@ CodeSupply was built as a zero-compromise, production-grade response to national
 
 ## 🏗️ System Architecture
 
-`mermaid
+```mermaid
 graph TD
     Client[Web Dashboard / Standalone CLI] --> |Upload / Query| API[FastAPI API Layer]
     Client <--> |WebSocket /ws| WS[Real-Time Event Stream]
@@ -63,7 +63,7 @@ graph TD
     end
 
     API --> DB[(SQLite / PostgreSQL via Async SQLAlchemy)]
-`
+```
 
 ---
 
