@@ -1,9 +1,23 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to the **CodeSupply** Software Supply-Chain Intelligence Platform will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.3.0] - 2026-09-11 (VEX Exploitability & Prescriptive Remediation Engine)
+
+### Added
+- **CycloneDX 1.7 VEX & OpenVEX Generator** (`backend/app/sbom/vex.py`): Automated creation of Vulnerability Exploitability eXchange statements classifying vulnerabilities into actionable triage states (`exploitable`, `in_triage`, `not_affected`, `fixed`) with NIST CVSS v3.1 vectors.
+- **Prescriptive Remediation Engine** (`backend/app/remediation/engine.py`): Prioritized dependency upgrade planner calculating risk reduction deltas, breaking change risk estimations, and generating 1-click executable CLI commands for npm (`npm install ...`), Python (`pip install ...`), Rust (`cargo update -p ...`), Maven, and Go (`go get ...`).
+- **REST Endpoints for VEX & Export**:
+  - `GET /api/scans/{id}/vex` & `GET /api/scans/{id}/download/vex`: Machine-readable VEX export.
+  - `GET /api/scans/{id}/remediations`: Prioritized remediation actions.
+  - `GET /api/scans/{id}/export/csv`: Component inventory export in standard CSV format.
+- **3-Way SBOM & VEX Dual-Standard Switcher** (`frontend/app/scan/[id]/sbom/page.tsx`): Seamless switching between CycloneDX 1.7 JSON, SPDX 2.3 JSON (ISO/IEC 5962:2021), and CycloneDX 1.7 VEX, complete with live syntax preview and 1-click downloads.
+- **Remediation Playbook UI** (`frontend/components/dashboard/overview.tsx`): Interactive dashboard cards with 1-click terminal command copying for quick vulnerability fixes.
 
 ---
 
