@@ -1,18 +1,10 @@
-﻿# Security Policy
-
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
+# Security Policy
 
 ## Reporting a Vulnerability
+Please use our GitHub Security Advisory form or open an issue under `.github/ISSUE_TEMPLATE/security_vulnerability.yml`.
 
-We take the security of CodeSupply and the safety of our archive parsing engine seriously.
-
-If you discover a security vulnerability (such as archive decompression issues, path traversal bugs, or parser bypasses):
-1. **Do not** open a public issue.
-2. Email details to `shauryamalhotra957@gmail.com`.
-3. Please include reproduction steps, sample archive (if applicable), and expected vs. actual behavior.
-
-We appreciate responsible disclosure and will respond within 48 hours.
+## Supported Versions
+| Version | Supported |
+| :--- | :--- |
+| 1.2.x | Yes |
+| 1.0.x | Yes |
