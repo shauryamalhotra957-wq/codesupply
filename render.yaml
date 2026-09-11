@@ -1,0 +1,24 @@
+﻿services:
+  - type: web
+    name: codesupply-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -e .
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./codesupply.db
+      - key: TEMP_DIR
+        value: ./tmp
+
+  - type: web
+    name: codesupply-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.17.0

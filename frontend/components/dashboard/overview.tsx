@@ -100,22 +100,37 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
     }
   };
 
-  const calculateRiskGrade = () => {
-    if (summary.total_high_critical > 0) return { grade: 'F', color: 'text-red-600', text: 'Critical Risk' };
-    if (summary.total_vulnerabilities > summary.total_high_critical) return { grade: 'D', color: 'text-amber-500', text: 'Moderate Risk' };
-    if (summary.total_unknown_versions > 0) return { grade: 'B', color: 'text-blue-500', text: 'Low Risk' };
-    return { grade: 'A', color: 'text-green-500', text: 'Excellent' };
+  const downloadSpdx = async () => {
+    try {
+      const blob = await api.downloadSPDX(scanId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sbom-${scanId.substring(0,8)}.spdx.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download SPDX SBOM", err);
+    }
+  };
+
+  const openReport = () => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    window.open(`${apiBase}/scans/${scanId}/report/html`, '_blank');
   };
 
   const riskGrade = calculateRiskGrade();
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.location.reload()}>Rescan</Button>
-          <Button onClick={downloadSbom}>Export SBOM</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()}>Rescan</Button>
+          <Button variant="outline" size="sm" onClick={downloadSbom}>CycloneDX 1.7</Button>
+          <Button variant="outline" size="sm" onClick={downloadSpdx}>SPDX 2.3</Button>
+          <Button size="sm" className="bg-primary" onClick={openReport}>Executive Report</Button>
         </div>
       </div>
 

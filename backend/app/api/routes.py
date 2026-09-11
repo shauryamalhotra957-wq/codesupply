@@ -20,7 +20,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -725,6 +725,99 @@ async def download_scan_sbom(
         media_type="application/json",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/scans/{scan_id}/sbom/spdx")
+async def get_scan_sbom_spdx(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get SPDX 2.3 JSON SBOM."""
+    scan = await _get_scan_or_404(scan_id, db)
+
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before accessing SBOM.",
+                }
+            },
+        )
+
+    from app.sbom.spdx import SPDX23Generator
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    edge_result = await db.execute(select(DependencyEdge).where(DependencyEdge.scan_id == scan_id))
+    edges = edge_result.scalars().all()
+
+    generator = SPDX23Generator()
+    return generator.generate(scan, list(components), list(edges))
+
+
+@router.get("/scans/{scan_id}/download/spdx")
+async def download_scan_sbom_spdx(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download SPDX 2.3 SBOM as a JSON file."""
+    scan = await _get_scan_or_404(scan_id, db)
+
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before downloading SBOM.",
+                }
+            },
+        )
+
+    from app.sbom.spdx import SPDX23Generator
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    edge_result = await db.execute(select(DependencyEdge).where(DependencyEdge.scan_id == scan_id))
+    edges = edge_result.scalars().all()
+
+    generator = SPDX23Generator()
+    spdx_dict = generator.generate(scan, list(components), list(edges))
+    spdx_json = json.dumps(spdx_dict, indent=2, default=str)
+
+    filename = f"codesupply-sbom-{scan.project_name or scan_id}.spdx.json"
+
+    return StreamingResponse(
+        iter([spdx_json.encode()]),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/scans/{scan_id}/report/html")
+async def get_scan_report_html(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate and view/download Executive Security & Compliance Audit Report in HTML."""
+    scan = await _get_scan_or_404(scan_id, db)
+
+    from app.services.report import ExecutiveReportGenerator
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
+    vulns = vuln_result.scalars().all()
+
+    generator = ExecutiveReportGenerator()
+    html_content = generator.generate_html(scan, list(components), list(vulns))
+
+    return HTMLResponse(content=html_content)
 
 
 @router.get("/scans/{scan_id}/evidence/{evidence_id}")

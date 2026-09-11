@@ -132,6 +132,26 @@ class ApiClient {
     return response.blob();
   }
 
+  async downloadSPDX(scanId: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE}/scans/${scanId}/download/spdx`, {
+      method: 'GET',
+    });
+    if (!response.ok) {
+       throw new ApiError(response.status, "Failed to download SPDX SBOM");
+    }
+    return response.blob();
+  }
+
+  async downloadReportHTML(scanId: string): Promise<string> {
+    const response = await fetch(`${API_BASE}/scans/${scanId}/report/html`, {
+      method: 'GET',
+    });
+    if (!response.ok) {
+       throw new ApiError(response.status, "Failed to fetch Executive Report");
+    }
+    return response.text();
+  }
+
   async retryScan(scanId: string): Promise<Scan> {
     return fetchWithBase(`/scans/${scanId}/retry`, {
       method: "POST",
