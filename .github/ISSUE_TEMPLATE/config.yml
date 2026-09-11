@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: CodeSupply Security Documentation
+    url: https://github.com/shauryamalhotra957-wq/codesupply
+    about: Please review security guidelines before reporting vulnerabilities.
