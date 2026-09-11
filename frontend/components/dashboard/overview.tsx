@@ -12,8 +12,13 @@ import {
   HelpCircle,
   CheckCircle2,
   AlertCircle,
-  Activity
+  Activity,
+  Terminal,
+  Wrench,
+  Copy,
+  Check
 } from 'lucide-react';
+import { RemediationAction } from '@/types';
 import { 
   PieChart, 
   Pie, 
@@ -58,6 +63,23 @@ const VULN_COLORS = {
 
 export function DashboardOverview({ scanId }: { scanId: string }) {
   const { scan, summary, isLoading } = useScan(scanId);
+  const [remediations, setRemediations] = useState<RemediationAction[]>([]);
+  const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (scanId) {
+      api
+        .getRemediations(scanId)
+        .then((res) => setRemediations(res.remediations || []))
+        .catch(() => {});
+    }
+  }, [scanId]);
+
+  const copyCommand = (cmd: string) => {
+    navigator.clipboard.writeText(cmd);
+    setCopiedCmd(cmd);
+    setTimeout(() => setCopiedCmd(null), 2000);
+  };
 
   if (isLoading || !summary) {
     return (
@@ -315,6 +337,90 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
           </CardContent>
         </Card>
       </div>
+
+      {remediations.length > 0 && (
+        <Card className="wispr-glass rounded-2xl border-border/40 overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/30">
+            <div className="flex items-center gap-2.5">
+              <div className="h-8 w-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <Wrench className="h-4 w-4 text-purple-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">Prescriptive Remediation Playbook</CardTitle>
+                <p className="text-xs text-muted-foreground">Prioritized upgrade actions with 1-click executable terminal commands</p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-xs border-purple-500/30 text-purple-400 bg-purple-500/5">
+              {remediations.length} Actionable Upgrades
+            </Badge>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
+            {remediations.slice(0, 3).map((action) => (
+              <div
+                key={action.component_id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-card/60 border border-border/40 hover:border-border/80 transition-all"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm">{action.component_name}</span>
+                    <Badge variant="outline" className="text-[10px] font-mono capitalize">
+                      {action.ecosystem}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {action.current_version} &rarr; <span className="text-emerald-400 font-semibold">{action.target_version}</span>
+                    </span>
+                    <Badge
+                      className={
+                        action.severity === 'critical'
+                          ? 'bg-red-600 text-white text-[10px]'
+                          : action.severity === 'high'
+                          ? 'bg-orange-600 text-white text-[10px]'
+                          : 'bg-amber-600 text-white text-[10px]'
+                      }
+                    >
+                      {action.severity.toUpperCase()}
+                    </Badge>
+                    {action.breaking_change_risk === 'low' ? (
+                      <Badge variant="outline" className="text-[10px] text-emerald-400 border-emerald-500/30">
+                        Safe Patch
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30">
+                        Major Bump
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{action.rationale}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <code className="px-3 py-1.5 rounded-lg bg-black/60 border border-white/10 font-mono text-xs text-purple-300 max-w-xs sm:max-w-md truncate">
+                    {action.upgrade_command}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyCommand(action.upgrade_command)}
+                    className="h-8 px-2.5 rounded-lg text-xs gap-1.5"
+                  >
+                    {copiedCmd === action.upgrade_command ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
