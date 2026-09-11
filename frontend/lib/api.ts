@@ -7,7 +7,8 @@ import {
   GraphData,
   Vulnerability,
   SBOMData,
-  HealthResponse
+  HealthResponse,
+  RemediationsResponse
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -160,6 +161,32 @@ class ApiClient {
     return fetchWithBase(`/scans/${scanId}/retry`, {
       method: "POST",
     });
+  }
+
+  async getVEX(scanId: string): Promise<any> {
+    return fetchWithBase(`/scans/${scanId}/vex`);
+  }
+
+  async downloadVEX(scanId: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE}/scans/${scanId}/download/vex`, {
+      method: "GET",
+    });
+    if (!response.ok) {
+      throw new ApiError(response.status, "Failed to download VEX document");
+    }
+    return response.blob();
+  }
+
+  async getRemediations(scanId: string): Promise<RemediationsResponse> {
+    return fetchWithBase(`/scans/${scanId}/remediations`);
+  }
+
+  exportCSVUrl(scanId: string): string {
+    return `${API_BASE}/scans/${scanId}/export/csv`;
+  }
+
+  downloadVEXUrl(scanId: string): string {
+    return `${API_BASE}/scans/${scanId}/download/vex`;
   }
 
 

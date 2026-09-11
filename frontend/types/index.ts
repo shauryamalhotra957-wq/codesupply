@@ -166,3 +166,25 @@ export interface HealthResponse {
   version: string;
   database: string;
 }
+
+export interface RemediationAction {
+  component_id: string;
+  component_name: string;
+  current_version: string;
+  ecosystem: string;
+  target_version: string;
+  upgrade_command: string;
+  severity: "critical" | "high" | "medium" | "low" | "info" | "none";
+  max_cvss_score: number | null;
+  vulns_fixed: string[];
+  breaking_change_risk: "low" | "medium" | "high";
+  risk_reduction_score: number;
+  rationale: string;
+}
+
+export interface RemediationsResponse {
+  scan_id: string;
+  total_remediations: number;
+  remediations: RemediationAction[];
+}
+
