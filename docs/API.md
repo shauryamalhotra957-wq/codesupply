@@ -62,31 +62,47 @@ Retrieves the risk assessment and vulnerability report for a completed scan.
 }
 ```
 
-### 3. Download SBOM
+### 3. Download Dual-Standard SBOM & VEX
 
-**Endpoint:** `GET /api/v1/scan/{scan_id}/sbom`
+- **CycloneDX 1.7 JSON:** `GET /api/scans/{scan_id}/sbom` (Download: `GET /api/scans/{scan_id}/download/sbom`)
+- **SPDX 2.3 JSON (ISO):** `GET /api/scans/{scan_id}/sbom/spdx` (Download: `GET /api/scans/{scan_id}/download/spdx`)
+- **CycloneDX 1.7 VEX:** `GET /api/scans/{scan_id}/vex` (Download: `GET /api/scans/{scan_id}/download/vex`)
+- **CSV Component Inventory:** `GET /api/scans/{scan_id}/export/csv`
+- **Executive Audit Report (HTML):** `GET /api/scans/{scan_id}/report/html`
 
-Retrieves the CycloneDX 1.7 JSON SBOM generated from the scan.
+### 4. Prescriptive Remediation Engine
+
+**Endpoint:** `GET /api/scans/{scan_id}/remediations`
+
+Returns prioritized dependency upgrades with 1-click executable CLI commands:
 
 **Response (200 OK)**
-- **Content-Type**: `application/json`
-*(Returns a standard CycloneDX JSON document)*
-
-### 4. SBOM Diffing
-
-**Endpoint:** `POST /api/v1/sbom/diff`
-
-Compares two CycloneDX SBOMs to identify changes in dependencies and vulnerabilities.
-
-- **Content-Type**: `application/json`
-
-**Request Body**
 ```json
 {
-  "base_sbom": { ... },
-  "target_sbom": { ... }
+  "scan_id": "9a38f712...",
+  "total_remediations": 1,
+  "remediations": [
+    {
+      "component_name": "lodash",
+      "current_version": "4.17.15",
+      "target_version": "4.17.21",
+      "ecosystem": "npm",
+      "upgrade_command": "npm install lodash@4.17.21",
+      "severity": "high",
+      "max_cvss_score": 7.4,
+      "breaking_change_risk": "low",
+      "risk_reduction_score": 7.4,
+      "rationale": "Upgrading from 4.17.15 to 4.17.21 patches 1 vulnerabilities with low breaking risk."
+    }
+  ]
 }
 ```
+
+### 5. SBOM Diffing & Evolution Tracking
+
+**Endpoint:** `GET /api/scans/{scan_id}/diff/{other_scan_id}`
+
+Compares two scans to identify added/removed components, version bumps, and resolved vulnerabilities.
 
 **Response (200 OK)**
 ```json

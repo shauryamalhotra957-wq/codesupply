@@ -798,6 +798,165 @@ async def download_scan_sbom_spdx(
     )
 
 
+@router.get("/scans/{scan_id}/vex")
+async def get_scan_vex(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get CycloneDX 1.7 VEX (Vulnerability Exploitability eXchange) document."""
+    scan = await _get_scan_or_404(scan_id, db)
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before accessing VEX statements.",
+                }
+            },
+        )
+    from app.sbom.vex import VEXGenerator
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
+    vulns = vuln_result.scalars().all()
+
+    return VEXGenerator.generate_cyclonedx_vex(scan, list(components), list(vulns))
+
+
+@router.get("/scans/{scan_id}/download/vex")
+async def download_scan_vex(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Download CycloneDX 1.7 VEX as a JSON file."""
+    scan = await _get_scan_or_404(scan_id, db)
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before downloading VEX.",
+                }
+            },
+        )
+    from app.sbom.vex import VEXGenerator
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
+    vulns = vuln_result.scalars().all()
+
+    vex_doc = VEXGenerator.generate_cyclonedx_vex(scan, list(components), list(vulns))
+    vex_json = json.dumps(vex_doc, indent=2, default=str)
+    filename = f"codesupply-vex-{scan.project_name or scan_id}.cdx.json"
+
+    return StreamingResponse(
+        iter([vex_json.encode()]),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/scans/{scan_id}/remediations")
+async def get_scan_remediations(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Get prioritized actionable dependency remediations and upgrade commands."""
+    scan = await _get_scan_or_404(scan_id, db)
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before calculating remediations.",
+                }
+            },
+        )
+    from app.remediation.engine import RemediationEngine
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id))
+    components = comp_result.scalars().all()
+
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
+    vulns = vuln_result.scalars().all()
+
+    actions = RemediationEngine.generate_remediations(list(components), list(vulns))
+    return {
+        "scan_id": scan.id,
+        "total_remediations": len(actions),
+        "remediations": [a.to_dict() for a in actions],
+    }
+
+
+@router.get("/scans/{scan_id}/export/csv")
+async def export_scan_csv(
+    scan_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Export complete software component inventory to CSV format."""
+    import csv
+    import io
+
+    scan = await _get_scan_or_404(scan_id, db)
+    if scan.status != "complete":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": {
+                    "code": "SCAN_INCOMPLETE",
+                    "message": "Scan must be complete before exporting inventory.",
+                }
+            },
+        )
+
+    comp_result = await db.execute(select(Component).where(Component.scan_id == scan_id).order_by(Component.name))
+    components = comp_result.scalars().all()
+
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.scan_id == scan_id))
+    vulns = vuln_result.scalars().all()
+
+    vuln_counts: dict[str, int] = {}
+    for v in vulns:
+        vuln_counts[v.component_id] = vuln_counts.get(v.component_id, 0) + 1
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        ["Name", "Version", "Ecosystem", "Type", "License", "Risk Level", "PURL", "Vulnerability Count", "Source File"]
+    )
+
+    for c in components:
+        writer.writerow(
+            [
+                c.name,
+                c.version or "unknown",
+                c.ecosystem,
+                c.dependency_type,
+                c.license or "NOASSERTION",
+                c.risk_level,
+                c.purl or "",
+                vuln_counts.get(c.id, 0),
+                c.source_file,
+            ]
+        )
+
+    csv_data = output.getvalue()
+    filename = f"codesupply-inventory-{scan.project_name or scan_id}.csv"
+
+    return StreamingResponse(
+        iter([csv_data.encode("utf-8")]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @router.get("/scans/{scan_id}/report/html")
 async def get_scan_report_html(
     scan_id: str,
