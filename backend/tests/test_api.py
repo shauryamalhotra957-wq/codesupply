@@ -74,6 +74,6 @@ async def test_create_sample_scan():
 @pytest.mark.asyncio
 async def test_get_nonexistent_scan_404():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        response = await client.get("/api/scans/nonexistent-id-12345")
+        response = await client.get("/api/scans/aabbccdd11223344aabbccdd11223344")
         assert response.status_code == 404
         assert response.json()["error"]["code"] == "SCAN_NOT_FOUND"

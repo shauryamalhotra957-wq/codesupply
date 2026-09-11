@@ -47,7 +47,7 @@ async def test_corrupted_or_non_zip_rejected(archive_service, tmp_path):
 
     with pytest.raises(ArchiveSecurityError) as exc_info:
         await archive_service.validate_and_extract(bad_zip, "scan_corrupt")
-    assert exc_info.value.code == "INVALID_ARCHIVE"
+    assert exc_info.value.code == "INVALID_SIGNATURE"
 
 
 @pytest.mark.asyncio

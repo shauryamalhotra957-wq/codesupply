@@ -93,11 +93,11 @@ class ArchiveService:
             with zipfile.ZipFile(file_path, "r") as zf:
                 infos = zf.infolist()
 
-                # File count check (max 10000 files)
-                if len(infos) > 10000:
+                # File count check
+                if len(infos) > self.settings.MAX_ARCHIVE_FILES:
                     raise ArchiveSecurityError(
                         "TOO_MANY_FILES",
-                        f"Archive contains {len(infos)} entries, exceeding the 10000 file limit.",
+                        f"Archive contains {len(infos)} entries, exceeding the {self.settings.MAX_ARCHIVE_FILES} file limit.",
                     )
 
                 # Uncompressed size check (archive bomb protection)
