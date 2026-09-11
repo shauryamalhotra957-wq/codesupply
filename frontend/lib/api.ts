@@ -33,7 +33,7 @@ async function fetchWithBase(endpoint: string, options: RequestInit = {}) {
     let message = "An error occurred";
     try {
       const data = await response.json();
-      message = data.message || data.detail || message;
+      message = data.error?.message || data.message || data.detail || message;
     } catch {
       // Ignored
     }

@@ -230,6 +230,9 @@ class ScanWorker:
                 npm_declarations = []
                 npm_lockfile_pkgs = []
                 npm_lockfile_rels = []
+                cargo_declarations = []
+                cargo_lockfile_pkgs = []
+                cargo_lockfile_rels = []
                 parsed_count = 0
 
                 for m in supported:
@@ -272,7 +275,11 @@ class ScanWorker:
                     elif m.ecosystem == "cargo":
                         if file_name == "Cargo.toml":
                             pkgs = self.rust_parser.parse_cargo_toml(content, m.path)
-                            all_parsed_packages.extend(pkgs)
+                            cargo_declarations.extend(pkgs)
+                        elif file_name == "Cargo.lock":
+                            pkgs, rels = self.rust_parser.parse_cargo_lock(content, m.path)
+                            cargo_lockfile_pkgs.extend(pkgs)
+                            cargo_lockfile_rels.extend(rels)
 
                     parsed_count += 1
                     await self._update_stage(
@@ -294,6 +301,16 @@ class ScanWorker:
                     all_parsed_relationships.extend(merged_rels)
                 else:
                     all_parsed_packages.extend(npm_declarations)
+
+                # Merge cargo declarations with lockfile
+                if cargo_lockfile_pkgs:
+                    merged_pkgs, merged_rels = self.rust_parser.merge_manifest_with_lockfile(
+                        cargo_declarations, cargo_lockfile_pkgs, cargo_lockfile_rels
+                    )
+                    all_parsed_packages.extend(merged_pkgs)
+                    all_parsed_relationships.extend(merged_rels)
+                else:
+                    all_parsed_packages.extend(cargo_declarations)
 
                 await self._update_stage(
                     db,
@@ -491,6 +508,34 @@ class ScanWorker:
                 unavailable_count = 0
 
                 vuln_details_cache: dict[str, dict] = {}
+                sem = asyncio.Semaphore(12)
+
+                async def prefetch_vulns(vuln_list: list[dict]):
+                    needed_ids = set()
+                    for v in vuln_list:
+                        vid = v.get("id")
+                        if (
+                            vid
+                            and vid not in vuln_details_cache
+                            and "severity" not in v
+                            and "database_specific" not in v
+                            and "summary" not in v
+                        ):
+                            needed_ids.add(vid)
+
+                    async def fetch_one(vid: str):
+                        async with sem:
+                            try:
+                                resp = await http_client.get(
+                                    f"{self.settings.OSV_API_URL}/v1/vulns/{vid}", timeout=10.0
+                                )
+                                if resp.status_code == 200:
+                                    vuln_details_cache[vid] = resp.json()
+                            except Exception as e:
+                                logger.warning(f"Could not fetch full advisory {vid}: {e}")
+
+                    if needed_ids:
+                        await asyncio.gather(*[fetch_one(vid) for vid in needed_ids])
 
                 async def get_full_vuln_data(raw_vuln: dict) -> dict:
                     vuln_id = raw_vuln.get("id")
@@ -550,6 +595,7 @@ class ScanWorker:
                         if cached:
                             # Use cached data
                             cached_vulns = cached.response_data.get("vulns", []) if cached.response_data else []
+                            await prefetch_vulns(cached_vulns)
                             for vuln_data in cached_vulns:
                                 full_vuln = await get_full_vuln_data(vuln_data)
                                 finding = self._create_finding(comp, full_vuln, scan_id)
@@ -591,6 +637,10 @@ class ScanWorker:
                             )
                             resp.raise_for_status()
                             results = resp.json().get("results", [])
+
+                            # Pre-fetch all advisory details in this batch concurrently
+                            all_batch_vulns = [v for res in results for v in res.get("vulns", [])]
+                            await prefetch_vulns(all_batch_vulns)
 
                             for comp, result in zip(batch_comps, results):
                                 vulns = result.get("vulns", [])

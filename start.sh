@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 
 echo "================================================================"
@@ -7,6 +7,9 @@ echo "================================================================"
 
 # Start backend
 cd backend
+if [ -d "venv" ]; then
+    source venv/bin/activate
+fi
 python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
 BACKEND_PID=$!
 cd ..
@@ -25,5 +28,5 @@ echo " - Frontend Dashboard: http://localhost:3000"
 echo " - Backend OpenAPI Docs: http://localhost:8000/docs"
 echo "Press Ctrl+C to terminate both servers."
 
-trap "kill   2>/dev/null" EXIT
+trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT
 wait

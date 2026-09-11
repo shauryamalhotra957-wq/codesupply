@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Scan } from '@/types';
 import { api } from '@/lib/api';
 
@@ -32,8 +32,10 @@ export function useScanPolling(scanId: string | null) {
     };
 
     const setupWebSocket = () => {
-      const wsUrl = process.env.NEXT_PUBLIC_API_URL?.replace('http', 'ws') || 'ws://localhost:8000';
-      ws = new WebSocket(wsUrl + '/api/scans/' + scanId + '/ws');
+      const base = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000')
+        .replace(/\/api\/?$/, '')
+        .replace(/^http/, 'ws');
+      ws = new WebSocket(`${base}/api/scans/${scanId}/ws`);
 
       ws.onmessage = (event) => {
         try {

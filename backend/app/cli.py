@@ -22,7 +22,12 @@ def print_banner():
     """)
 
 
-def scan_directory(target_path: Path, export_sbom: str | None = None, sbom_format: str = "cyclonedx"):
+def scan_directory(
+    target_path: Path,
+    export_sbom: str | None = None,
+    sbom_format: str = "cyclonedx",
+    export_csv: str | None = None,
+):
     target_path = target_path.resolve()
     if not target_path.exists():
         print(f"Error: Target path '{target_path}' does not exist.")
@@ -47,6 +52,9 @@ def scan_directory(target_path: Path, export_sbom: str | None = None, sbom_forma
     npm_declarations = []
     npm_lockfile_pkgs = []
     npm_lockfile_rels = []
+    cargo_declarations = []
+    cargo_lockfile_pkgs = []
+    cargo_lockfile_rels = []
 
     for m in supported:
         file_path = target_path / m.path
@@ -77,7 +85,12 @@ def scan_directory(target_path: Path, export_sbom: str | None = None, sbom_forma
                 all_packages.extend(pkgs)
                 all_relationships.extend(rels)
             elif m.ecosystem == "cargo":
-                all_packages.extend(rust_parser.parse_cargo_toml(content, m.path))
+                if file_name == "Cargo.toml":
+                    cargo_declarations.extend(rust_parser.parse_cargo_toml(content, m.path))
+                elif file_name == "Cargo.lock":
+                    pkgs, rels = rust_parser.parse_cargo_lock(content, m.path)
+                    cargo_lockfile_pkgs.extend(pkgs)
+                    cargo_lockfile_rels.extend(rels)
         except Exception as e:
             print(f"[!] Warning: Failed to parse {m.path}: {e}")
 
@@ -89,6 +102,15 @@ def scan_directory(target_path: Path, export_sbom: str | None = None, sbom_forma
         all_relationships.extend(merged_rels)
     else:
         all_packages.extend(npm_declarations)
+
+    if cargo_lockfile_pkgs:
+        merged_c, merged_r = rust_parser.merge_manifest_with_lockfile(
+            cargo_declarations, cargo_lockfile_pkgs, cargo_lockfile_rels
+        )
+        all_packages.extend(merged_c)
+        all_relationships.extend(merged_r)
+    else:
+        all_packages.extend(cargo_declarations)
 
     from app.models.models import Component, DependencyEdge
 
@@ -175,6 +197,27 @@ def scan_directory(target_path: Path, export_sbom: str | None = None, sbom_forma
         out_path.write_text(json.dumps(sbom_data, indent=2))
         print(f"\n[OK] Exported {sbom_format.upper()} SBOM to: {out_path.resolve()}")
 
+    if export_csv:
+        import csv
+
+        csv_path = Path(export_csv)
+        with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["name", "version", "ecosystem", "dependency_type", "purl", "risk_level", "license"])
+            for c in components:
+                writer.writerow(
+                    [
+                        c.name,
+                        c.version or "",
+                        c.ecosystem,
+                        c.dependency_type,
+                        c.purl or "",
+                        c.risk_level or "none",
+                        c.license or "UNKNOWN",
+                    ]
+                )
+        print(f"\n[OK] Exported CSV Inventory to: {csv_path.resolve()}")
+
     print("\n[OK] Scan completed successfully.\n")
 
 
@@ -189,15 +232,21 @@ def main():
     scan_parser.add_argument(
         "--format", choices=["cyclonedx", "spdx"], default="cyclonedx", help="SBOM output format (default: cyclonedx)"
     )
+    scan_parser.add_argument("--export-csv", help="Save components inventory to specified CSV file path")
 
     subparsers.add_parser("version", help="Show CodeSupply platform version")
 
     args = parser.parse_args()
 
     if args.command == "scan":
-        scan_directory(Path(args.path), export_sbom=args.export_sbom, sbom_format=args.format)
+        scan_directory(
+            Path(args.path),
+            export_sbom=args.export_sbom,
+            sbom_format=args.format,
+            export_csv=args.export_csv,
+        )
     elif args.command == "version":
-        print("CodeSupply v1.2.0 (CycloneDX 1.7 & SPDX 2.3 Ready)")
+        print("CodeSupply v1.3.0 (CycloneDX 1.7, SPDX 2.3 & VEX Ready)")
     else:
         parser.print_help()
 

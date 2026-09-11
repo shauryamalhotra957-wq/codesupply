@@ -2,7 +2,7 @@
 
 import toml
 
-from app.services.normalizer import ParsedPackage
+from app.services.normalizer import ParsedPackage, ParsedRelationship
 
 
 class RustParser:
@@ -137,3 +137,76 @@ class RustParser:
             return spec, "declared_range"
 
         return None, "unknown"
+
+    def parse_cargo_lock(self, content: str, file_path: str) -> tuple[list[ParsedPackage], list[ParsedRelationship]]:
+        """Parse Cargo.lock and return exact packages and relationships."""
+        try:
+            data = toml.loads(content)
+        except Exception:
+            return [], []
+
+        packages = []
+        relationships = []
+
+        raw_packages = data.get("package") or data.get("packages") or []
+        if not isinstance(raw_packages, list):
+            return [], []
+
+        for item in raw_packages:
+            if not isinstance(item, dict):
+                continue
+
+            name = item.get("name")
+            version = item.get("version")
+            if not name or not version:
+                continue
+
+            pkg = ParsedPackage(
+                name=name,
+                version=version,
+                version_raw=version,
+                dependency_type="transitive",
+                source_file=file_path,
+                source_location=f"[[package]].{name}",
+                version_confidence="exact",
+                ecosystem="cargo",
+            )
+            packages.append(pkg)
+
+            # Dependencies
+            deps = item.get("dependencies", [])
+            if isinstance(deps, list):
+                for dep in deps:
+                    if isinstance(dep, str):
+                        # dep can be formatted as "crate-name" or "crate-name 1.0.0 (registry+...)"
+                        dep_name = dep.split()[0].strip()
+                        relationships.append(
+                            ParsedRelationship(
+                                source_name=name,
+                                target_name=dep_name,
+                                source_file=file_path,
+                                evidence_method="observed-lockfile-edge",
+                                confidence="high",
+                            )
+                        )
+
+        return packages, relationships
+
+    def merge_manifest_with_lockfile(
+        self,
+        manifest_packages: list[ParsedPackage],
+        lockfile_packages: list[ParsedPackage],
+        lockfile_relationships: list[ParsedRelationship],
+    ) -> tuple[list[ParsedPackage], list[ParsedRelationship]]:
+        """Merge declared packages from Cargo.toml with exact packages from Cargo.lock."""
+        merged_packages = {}
+        for pkg in lockfile_packages:
+            merged_packages[pkg.name] = pkg
+
+        for pkg in manifest_packages:
+            if pkg.name in merged_packages:
+                merged_packages[pkg.name].dependency_type = pkg.dependency_type
+            else:
+                merged_packages[pkg.name] = pkg
+
+        return list(merged_packages.values()), list(lockfile_relationships)

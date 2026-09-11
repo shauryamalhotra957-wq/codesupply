@@ -21,6 +21,13 @@ def test_security_headers():
     assert response.headers.get("Permissions-Policy") == "camera=(), microphone=(), geolocation=()"
 
 
+def test_docs_csp_allows_cdn():
+    response = client.get("/docs")
+    assert response.status_code == 200
+    csp = response.headers.get("Content-Security-Policy", "")
+    assert "cdn.jsdelivr.net" in csp
+
+
 def test_rate_limiting():
     # The rate limiter works on IP. We'll simulate 5 uploads.
     # We use a custom client IP if needed, but TestClient uses a default one ("testclient").

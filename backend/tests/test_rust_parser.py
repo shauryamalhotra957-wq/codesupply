@@ -73,3 +73,59 @@ def test_parse_cargo_toml_malformed():
     parser = RustParser()
     pkgs = parser.parse_cargo_toml("not valid = [toml", "Cargo.toml")
     assert len(pkgs) == 0
+
+
+def test_parse_cargo_lock():
+    content = """version = 3
+
+[[package]]
+name = "aho-corasick"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "memchr 2.7.1",
+]
+
+[[package]]
+name = "memchr"
+version = "2.7.1"
+"""
+    parser = RustParser()
+    pkgs, rels = parser.parse_cargo_lock(content, "Cargo.lock")
+    assert len(pkgs) == 2
+    assert len(rels) == 1
+    aho = next(p for p in pkgs if p.name == "aho-corasick")
+    assert aho.version == "1.1.2"
+    assert aho.version_confidence == "exact"
+    assert aho.dependency_type == "transitive"
+    assert rels[0].source_name == "aho-corasick"
+    assert rels[0].target_name == "memchr"
+
+
+def test_merge_manifest_with_lockfile():
+    manifest_content = """[dependencies]
+aho-corasick = "1.1"
+"""
+    lock_content = """version = 3
+
+[[package]]
+name = "aho-corasick"
+version = "1.1.2"
+dependencies = ["memchr"]
+
+[[package]]
+name = "memchr"
+version = "2.7.1"
+"""
+    parser = RustParser()
+    manifest_pkgs = parser.parse_cargo_toml(manifest_content, "Cargo.toml")
+    lock_pkgs, lock_rels = parser.parse_cargo_lock(lock_content, "Cargo.lock")
+    merged_pkgs, merged_rels = parser.merge_manifest_with_lockfile(manifest_pkgs, lock_pkgs, lock_rels)
+
+    assert len(merged_pkgs) == 2
+    aho = next(p for p in merged_pkgs if p.name == "aho-corasick")
+    assert aho.dependency_type == "direct"
+    assert aho.version == "1.1.2"
+    mem = next(p for p in merged_pkgs if p.name == "memchr")
+    assert mem.dependency_type == "transitive"
+    assert len(merged_rels) == 1

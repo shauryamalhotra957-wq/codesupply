@@ -7,12 +7,11 @@ MANIFEST_PATTERNS = {
     "python": {"requirements.txt", "pyproject.toml"},
     "maven": {"pom.xml"},
     "golang": {"go.mod"},
-    "cargo": {"Cargo.toml"},
+    "cargo": {"Cargo.toml", "Cargo.lock"},
 }
 
 DETECTION_ONLY = {
     "go_sum": {"go.sum"},
-    "cargo_lock": {"Cargo.lock"},
     "csharp": {"*.csproj", "*.sln", "packages.config"},
     "php": {"composer.json", "composer.lock"},
 }
