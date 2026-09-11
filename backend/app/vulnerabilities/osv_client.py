@@ -102,11 +102,20 @@ class OSVClient:
         return findings
 
     def _parse_finding(self, component: Component, vuln_data: dict, scan_id: str) -> VulnerabilityFinding:
+        severity_val = "UNKNOWN"
+        raw_sev = vuln_data.get("severity")
+        if isinstance(raw_sev, list) and raw_sev:
+            severity_val = raw_sev[0].get("score") or raw_sev[0].get("type") or "UNKNOWN"
+        elif isinstance(raw_sev, str):
+            severity_val = raw_sev
+
         return VulnerabilityFinding(
             scan_id=scan_id,
             component_id=component.id,
-            vulnerability_id=vuln_data.get("id"),
-            summary=vuln_data.get("summary"),
-            details=vuln_data.get("details"),
-            severity=vuln_data.get("severity", []),
+            vuln_id=vuln_data.get("id", "UNKNOWN"),
+            aliases=vuln_data.get("aliases", []),
+            summary=vuln_data.get("summary") or (vuln_data.get("details", "")[:200] if vuln_data.get("details") else None),
+            severity=severity_val,
+            references=[ref.get("url") for ref in vuln_data.get("references", []) if ref.get("url")],
+            source="osv",
         )

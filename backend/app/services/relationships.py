@@ -29,8 +29,10 @@ class RelationshipBuilder:
         seen_edges: set[tuple[str, str]] = set()
 
         for rel in parsed_relationships:
-            source_id = component_map.get(rel.source_name.lower())
-            target_id = component_map.get(rel.target_name.lower())
+            # Try exact case first (required for Maven groupId:artifactId),
+            # fall back to lowercase for case-insensitive ecosystems (npm, pypi)
+            source_id = component_map.get(rel.source_name) or component_map.get(rel.source_name.lower())
+            target_id = component_map.get(rel.target_name) or component_map.get(rel.target_name.lower())
 
             if not source_id or not target_id:
                 continue

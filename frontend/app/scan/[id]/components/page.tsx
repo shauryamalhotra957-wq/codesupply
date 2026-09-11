@@ -18,6 +18,7 @@ import { EcosystemBadge } from '@/components/shared/ecosystem-badge';
 import { ConfidenceBadge } from '@/components/shared/confidence-badge';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { ComponentDetail } from '@/components/components/component-detail';
 import { Search } from 'lucide-react';
 
@@ -148,6 +149,30 @@ export default function ComponentsPage({ params }: { params: { id: string } }) {
               )}
             </TableBody>
           </Table>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between px-2 py-4">
+        <div className="text-sm text-muted-foreground">
+          Showing page {page} of {totalPages}
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1 || isLoading}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages || isLoading}
+          >
+            Next
+          </Button>
         </div>
       </div>
 

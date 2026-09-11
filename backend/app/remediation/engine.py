@@ -94,11 +94,22 @@ class RemediationEngine:
                 # No fixed version yet
                 continue
 
-            # Pick target version (highest/first fixed version)
-            target_ver = fixed_versions[0]
-            for fv in fixed_versions:
-                if fv > target_ver:
-                    target_ver = fv
+            def _version_key(ver: str) -> tuple:
+                """Parse version string into a numeric tuple for correct comparison."""
+                parts = []
+                for segment in ver.split("."):
+                    # Strip pre-release suffixes (e.g. "1.0.0-rc1" -> "1", "0", "0")
+                    cleaned = ""
+                    for ch in segment:
+                        if ch.isdigit():
+                            cleaned += ch
+                        else:
+                            break
+                    parts.append(int(cleaned) if cleaned else 0)
+                return tuple(parts)
+
+            # Pick target version (highest fixed version by semver)
+            target_ver = max(fixed_versions, key=_version_key)
 
             # Calculate highest severity and max CVSS
             highest_sev = "low"
