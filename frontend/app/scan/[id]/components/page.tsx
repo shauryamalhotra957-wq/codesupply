@@ -79,6 +79,8 @@ export default function ComponentsPage({ params }: { params: { id: string } }) {
             <option value="npm">npm</option>
             <option value="pypi">PyPI</option>
             <option value="maven">Maven</option>
+            <option value="go">Go</option>
+            <option value="cargo">Cargo (Rust)</option>
           </Select>
         </div>
       </div>

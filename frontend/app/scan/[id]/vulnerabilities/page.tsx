@@ -62,6 +62,7 @@ export default function VulnerabilitiesPage({ params }: { params: { id: string }
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Severity</TableHead>
+                  <TableHead>CVSS</TableHead>
                   <TableHead>Component</TableHead>
                   <TableHead>Summary</TableHead>
                   <TableHead>Fixed In</TableHead>
@@ -70,7 +71,7 @@ export default function VulnerabilitiesPage({ params }: { params: { id: string }
               <TableBody>
                 {vulnerabilities.map(vuln => (
                   <TableRow key={vuln.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedVuln(vuln)}>
-                    <TableCell className="font-mono text-xs text-primary">
+                    <TableCell className="font-mono text-xs text-primary font-semibold">
                       {vuln.vuln_id}
                     </TableCell>
                     <TableCell>
@@ -78,14 +79,28 @@ export default function VulnerabilitiesPage({ params }: { params: { id: string }
                         {vuln.severity}
                       </Badge>
                     </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {vuln.cvss_score ? (
+                        <span className={`font-bold px-1.5 py-0.5 rounded ${
+                          vuln.cvss_score >= 9.0 ? 'bg-red-500/10 text-red-500' :
+                          vuln.cvss_score >= 7.0 ? 'bg-orange-500/10 text-orange-500' :
+                          vuln.cvss_score >= 4.0 ? 'bg-amber-500/10 text-amber-500' :
+                          'bg-blue-500/10 text-blue-500'
+                        }`}>
+                          {vuln.cvss_score.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs font-mono">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="font-mono text-sm">{vuln.component_name}</div>
                       <div className="text-xs text-muted-foreground font-mono">{vuln.component_version}</div>
                     </TableCell>
-                    <TableCell className="max-w-md truncate" title={vuln.summary}>
+                    <TableCell className="max-w-md truncate text-xs" title={vuln.summary}>
                       {vuln.summary}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="font-mono text-xs">
                       {vuln.fixed_version || '-'}
                     </TableCell>
                   </TableRow>

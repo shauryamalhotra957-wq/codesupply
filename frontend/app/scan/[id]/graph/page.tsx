@@ -31,12 +31,22 @@ export default function GraphPage({ params }: { params: { id: string } }) {
              position: { x, y },
              data: { label: `${n.name}\n${n.version || '?'}` },
              style: {
-               border: n.risk_level === 'critical' || n.risk_level === 'high' ? '2px solid red' : '1px solid #ccc',
-               borderRadius: '5px',
-               padding: '10px',
-               background: '#fff',
+               border: n.risk_level === 'critical' 
+                 ? '1.5px solid rgba(239, 68, 68, 0.8)' 
+                 : n.risk_level === 'high' 
+                 ? '1.5px solid rgba(249, 115, 22, 0.8)' 
+                 : n.risk_level === 'medium'
+                 ? '1.5px solid rgba(245, 158, 11, 0.8)'
+                 : '1px solid rgba(255, 255, 255, 0.15)',
+               borderRadius: '10px',
+               padding: '10px 14px',
+               background: 'rgba(15, 17, 26, 0.9)',
+               color: '#f8fafc',
                fontSize: '12px',
-               fontFamily: 'monospace'
+               fontFamily: 'monospace',
+               boxShadow: n.risk_level === 'critical' 
+                 ? '0 0 15px rgba(239, 68, 68, 0.25)' 
+                 : '0 4px 12px rgba(0, 0, 0, 0.4)'
              }
            };
         });
@@ -45,7 +55,7 @@ export default function GraphPage({ params }: { params: { id: string } }) {
           source: e.source,
           target: e.target,
           markerEnd: { type: MarkerType.ArrowClosed },
-          style: { stroke: '#999' }
+          style: { stroke: 'rgba(148, 163, 184, 0.35)', strokeWidth: 1.5 }
         }));
         setNodes(newNodes);
         setEdges(newEdges);

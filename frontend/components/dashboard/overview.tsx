@@ -187,7 +187,7 @@ export function DashboardOverview({ scanId }: { scanId: string }) {
             ) : (
               <AlertCircle className="h-4 w-4 text-amber-500" />
             )}
-            <span>CycloneDX 1.6 SBOM {summary.sbom_valid ? 'validated' : 'generated'}</span>
+            <span>CycloneDX 1.7 SBOM {summary.sbom_valid ? 'validated' : 'generated'}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-500" />

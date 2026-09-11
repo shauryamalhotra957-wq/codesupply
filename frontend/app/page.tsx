@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Upload, 
   FileArchive, 
@@ -9,13 +10,16 @@ import {
   ShieldCheck, 
   FileJson, 
   Activity, 
-  Globe, 
   Zap, 
   CheckCircle2, 
   Sparkles,
   Layers,
   Search,
-  Lock
+  Lock,
+  GitCompare,
+  FileText,
+  Cpu,
+  ArrowUpRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
@@ -80,63 +84,70 @@ export default function LandingPage() {
     }
   };
 
+  const ecosystems = [
+    { name: "Node.js", tag: "npm", files: "package.json, package-lock.json (v1/v2/v3)" },
+    { name: "Python", tag: "PyPI", files: "requirements.txt, pyproject.toml" },
+    { name: "Java / JVM", tag: "Maven", files: "pom.xml" },
+    { name: "Go", tag: "Go Modules", files: "go.mod" },
+    { name: "Rust", tag: "Cargo", files: "Cargo.toml" },
+  ];
+
   return (
     <div className="flex min-h-screen bg-background relative overflow-hidden selection:bg-purple-500/20">
       {/* Wispr Flow Atmospheric Ambient Glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-b from-purple-600/15 via-blue-600/10 to-transparent blur-3xl pointer-events-none -z-10 rounded-full" />
-      <div className="fixed -bottom-32 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-indigo-500/10 to-transparent blur-3xl pointer-events-none -z-10 rounded-full" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-purple-600/15 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-10 rounded-full" />
+      <div className="fixed -bottom-40 right-1/4 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-500/10 via-purple-500/5 to-transparent blur-3xl pointer-events-none -z-10 rounded-full" />
 
       <Sidebar />
       <div className="flex-1 flex flex-col lg:pl-64">
         <Topbar />
         
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 lg:py-16">
-          <div className="max-w-4xl w-full space-y-10 animate-fade-in-up">
+        <main className="flex-1 flex flex-col items-center justify-start px-4 py-12 lg:py-16">
+          <div className="max-w-5xl w-full space-y-12 animate-fade-in-up">
             
-            {/* Wispr Floating Pill Announcement */}
+            {/* Top Pill Announcement */}
             <div className="flex justify-center">
               <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full border border-border/60 bg-card/40 backdrop-blur-xl text-xs font-medium shadow-sm hover:border-border transition-colors">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-muted-foreground">Supply Chain Flow Engine</span>
+                <span className="text-muted-foreground font-mono">SIH1449</span>
                 <span className="text-border">|</span>
                 <span className="text-foreground flex items-center gap-1 font-semibold">
-                  CycloneDX 1.7 & SPDX 2.3 Ready <Sparkles className="w-3 h-3 text-purple-500" />
+                  CycloneDX 1.7 & SPDX 2.3 Ready <Sparkles className="w-3 h-3 text-purple-400" />
                 </span>
               </div>
             </div>
 
-            {/* Hero Section */}
-            <div className="text-center space-y-4 max-w-2xl mx-auto">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground leading-[1.1]">
-                Speak to your code. <br />
-                <span className="bg-gradient-to-r from-purple-500 via-indigo-400 to-blue-500 bg-clip-text text-transparent">
-                  Secure every dependency.
+            {/* Editorial Hero Section */}
+            <div className="text-center space-y-4 max-w-3xl mx-auto">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-foreground leading-[1.08]">
+                Map every dependency. <br />
+                <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-blue-400 bg-clip-text text-transparent">
+                  Expose every risk.
                 </span>
               </h1>
-              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                Effortless software bill of materials and vulnerability intelligence. 
-                Pure deterministic parsing without ever running untrusted code.
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
+                Autonomous software supply chain intelligence for SIH1449. Parse multi-ecosystem archives, resolve transitive dependency graphs, detect known vulnerabilities via OSV & CISA KEV, and export compliance-grade SBOMs.
               </p>
 
-              {/* Signature Wispr Flow Audio/Security Wave Visualizer */}
-              <div className="flex items-center justify-center gap-1.5 pt-2">
-                <span className="w-1 rounded-full bg-gradient-to-t from-purple-600 to-indigo-400 wave-bar-1" />
-                <span className="w-1 rounded-full bg-gradient-to-t from-purple-500 to-blue-400 wave-bar-2" />
-                <span className="w-1.5 rounded-full bg-gradient-to-t from-indigo-500 to-purple-400 wave-bar-3" />
-                <span className="w-1 rounded-full bg-gradient-to-t from-blue-500 to-indigo-400 wave-bar-4" />
-                <span className="w-1 rounded-full bg-gradient-to-t from-purple-600 to-blue-500 wave-bar-5" />
-                <span className="text-xs font-mono text-muted-foreground ml-2">5 Ecosystems Active</span>
+              {/* Status Telemetry Strip */}
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-card/40 border border-border/50 text-xs text-muted-foreground backdrop-blur-md">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="font-mono text-[11px] text-foreground font-semibold">Static AST Engine</span>
+                  <span className="text-border">|</span>
+                  <span>5 Ecosystems</span>
+                  <span className="text-border">|</span>
+                  <span>Zero Code Execution</span>
+                </div>
               </div>
             </div>
 
-            {/* Wispr Glass Dropzone Capsule */}
+            {/* Dropzone Capsule */}
             <div className="wispr-glow max-w-2xl mx-auto w-full">
               <div
-                className={`
-                  wispr-glass rounded-3xl p-8 sm:p-12 transition-all duration-300 text-center relative group
-                  ${isDragging ? 'border-purple-500/80 bg-purple-500/[0.08] scale-[1.01]' : 'hover:border-border'}
-                  ${isUploading ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}
-                `}
+                className={`wispr-glass rounded-3xl p-8 sm:p-12 transition-all duration-300 text-center relative group ${
+                  isDragging ? 'border-purple-500/80 bg-purple-500/[0.08] scale-[1.01]' : 'hover:border-border'
+                } ${isUploading ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -178,7 +189,7 @@ export default function LandingPage() {
                   </div>
 
                   {error && (
-                    <div className="text-xs font-semibold text-red-500 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full mt-2">
+                    <div className="text-xs font-semibold text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full mt-2">
                       {error}
                     </div>
                   )}
@@ -191,9 +202,9 @@ export default function LandingPage() {
               <Button
                 onClick={handleSampleScan}
                 disabled={isUploading}
-                className="w-full sm:w-auto rounded-full px-6 py-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-[0_0_25px_rgba(139,92,246,0.3)] transition-all duration-300 gap-2"
+                className="w-full sm:w-auto rounded-full px-7 py-6 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-[0_0_30px_rgba(139,92,246,0.35)] transition-all duration-300 gap-2"
               >
-                <Zap className="h-4 w-4" />
+                <Zap className="h-4 w-4 fill-current" />
                 Scan Demo Project (Instant)
                 <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -201,43 +212,134 @@ export default function LandingPage() {
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-full sm:w-auto rounded-full px-6 py-5 border-border/60 bg-card/40 backdrop-blur-xl text-foreground font-medium text-sm hover:bg-card/70 transition-all gap-2"
+                className="w-full sm:w-auto rounded-full px-7 py-6 border-border/60 bg-card/40 backdrop-blur-xl text-foreground font-medium text-sm hover:bg-card/70 transition-all gap-2"
               >
                 <FileArchive className="h-4 w-4 text-muted-foreground" />
-                Choose Local File
+                Choose Local Archive
               </Button>
             </div>
 
-            {/* Feature Cards in Wispr Frosted Glass */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
-              <div className="wispr-glass rounded-2xl p-5 space-y-2 border border-border/40 hover:border-purple-500/30 transition-colors">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-                  <Layers className="h-4 w-4" />
-                </div>
-                <h3 className="font-bold text-sm text-foreground">Dual Standard SBOM</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Export CycloneDX 1.7 JSON and SPDX 2.3 ISO standard formats with complete dependency graphs and PURLs.
+            {/* Bento Grid Feature Architecture */}
+            <div className="pt-8 space-y-4">
+              <div className="text-center space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                  Enterprise Supply Chain Architecture
+                </h2>
+                <p className="text-xs text-muted-foreground max-w-lg mx-auto">
+                  Built for precision, speed, and strict zero-trust sandbox execution.
                 </p>
               </div>
 
-              <div className="wispr-glass rounded-2xl p-5 space-y-2 border border-border/40 hover:border-indigo-500/30 transition-colors">
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                  <Search className="h-4 w-4" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                {/* Bento Card 1 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-purple-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+                    <Layers className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Dual SBOM Compliance</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Full OWASP CycloneDX 1.7 JSON and ISO/IEC 5962:2021 SPDX 2.3 exports with canonical Package URLs (PURLs) and cryptographically verifiable hashes.
+                  </p>
                 </div>
-                <h3 className="font-bold text-sm text-foreground">OSV & CISA KEV Intelligence</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Batch queries against real-time OSV.dev advisories, mapped to CVSS v3.1 scores and weaponized CISA KEV tags.
-                </p>
+
+                {/* Bento Card 2 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-indigo-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                    <Search className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Real-Time Vulnerability Intel</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Sub-second batch queries against OSV.dev advisories, mapped to CVSS v3.1 mathematical severity and correlated with CISA Known Exploited Vulnerabilities (KEV).
+                  </p>
+                </div>
+
+                {/* Bento Card 3 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-blue-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-105 transition-transform">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Zero Code Execution Sandbox</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Pure static AST parsing without invoking npm, pip, or cargo. Zip Slip path traversal mitigation, decompression bomb limits, and magic byte validation.
+                  </p>
+                </div>
+
+                {/* Bento Card 4 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-emerald-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                    <Cpu className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Transitive DAG Synthesis</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Constructs complete Directed Acyclic Graphs, separating direct from transitive dependencies, surfacing hidden depth risks and deep dependencies.
+                  </p>
+                </div>
+
+                {/* Bento Card 5 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-amber-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Executive Security Audit</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Generates standalone, printable HTML and JSON audit reports featuring letter-grade risk scoring (A to F), remediation guidance, and license attributions.
+                  </p>
+                </div>
+
+                {/* Bento Card 6 */}
+                <div className="wispr-glass rounded-2xl p-6 space-y-3 border border-border/40 hover:border-rose-500/30 transition-all group">
+                  <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
+                    <GitCompare className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Supply Chain Drift & Diff</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Diff any two historical project baselines to track added or removed packages, dependency drift, version bumps, and newly emerged CVE exposures.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Ecosystem Support Matrix */}
+            <div className="wispr-glass rounded-3xl p-6 sm:p-8 space-y-4 border border-border/40">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border/30">
+                <div>
+                  <h3 className="font-bold text-base text-foreground">Supported Manifests & Formats</h3>
+                  <p className="text-xs text-muted-foreground">Multi-ecosystem parsing with native lockfile resolution</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
+                    All 5 Engines Ready
+                  </span>
+                </div>
               </div>
 
-              <div className="wispr-glass rounded-2xl p-5 space-y-2 border border-border/40 hover:border-blue-500/30 transition-colors">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                  <Lock className="h-4 w-4" />
-                </div>
-                <h3 className="font-bold text-sm text-foreground">Zero Code Execution</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Pure static parser engine. Zip Slip suppression, magic bytes validation, and decompression bomb protection.
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
+                {ecosystems.map((eco) => (
+                  <div key={eco.name} className="p-3.5 rounded-xl bg-card/30 border border-border/30 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">{eco.name}</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                        {eco.tag}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-mono text-muted-foreground leading-tight">
+                      {eco.files}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center pt-4 pb-8 text-xs text-muted-foreground border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <div>
+                <span>CodeSupply - Built for Smart India Hackathon (SIH1449)</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <Link href="/scans" className="hover:text-foreground transition-colors">Scan History</Link>
+                <Link href="https://github.com/shauryamalhotra957-wq/codesupply" target="_blank" className="hover:text-foreground transition-colors flex items-center gap-1">
+                  GitHub <ArrowUpRight className="w-3 h-3" />
+                </Link>
               </div>
             </div>
 

@@ -122,6 +122,10 @@ class ApiClient {
     return fetchWithBase(`/scans/${scanId}/sbom`);
   }
 
+  async getSPDX(scanId: string): Promise<any> {
+    return fetchWithBase(`/scans/${scanId}/sbom/spdx`);
+  }
+
   async downloadSBOM(scanId: string): Promise<Blob> {
     const response = await fetch(`${API_BASE}/scans/${scanId}/download/sbom`, {
       method: 'GET',
