@@ -1,2 +1,2 @@
 # Dockerfile base image dependency extraction
-DOCKER_FILES = {'Dockerfile', 'Containerfile'}
+DOCKER_FILES = {"Dockerfile", "Containerfile"}
