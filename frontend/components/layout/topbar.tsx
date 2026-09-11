@@ -33,28 +33,31 @@ export function Topbar({ scanId }: TopbarProps) {
 
   const Actions = () => (
     <div className="flex items-center gap-2">
-      <Link href="https://github.com" target="_blank" rel="noreferrer">
-        <Button variant="ghost" size="icon">
-          <Github className="h-5 w-5" />
+      <Link href="https://github.com/shauryamalhotra957-wq/codesupply" target="_blank" rel="noreferrer">
+        <Button variant="ghost" size="icon" className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-card/70">
+          <Github className="h-4 w-4" />
         </Button>
       </Link>
-      <Button variant="ghost" size="icon" onClick={toggleTheme}>
-        {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-card/70">
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
       </Button>
     </div>
   );
 
   if (!scanId) {
     return (
-      <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6 pl-14 lg:pl-6 justify-between lg:justify-end">
-        <div className="flex-1 text-sm font-medium text-muted-foreground lg:text-right mr-4 lg:mr-0">CodeSupply Scanner</div>
+      <header className="flex h-16 items-center gap-4 border-b border-border/40 bg-card/40 backdrop-blur-2xl px-5 lg:px-8 pl-14 lg:pl-8 justify-between lg:justify-end sticky top-0 z-40">
+        <div className="flex-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-right mr-4 lg:mr-0 flex items-center lg:justify-end gap-2">
+          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+          <span>CodeSupply Intelligence Engine</span>
+        </div>
         <Actions />
       </header>
     );
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6 pl-14 lg:pl-6 justify-between lg:justify-end">
+    <header className="flex h-16 items-center gap-4 border-b border-border/40 bg-card/40 backdrop-blur-2xl px-5 lg:px-8 pl-14 lg:pl-8 justify-between lg:justify-end sticky top-0 z-40">
       <div className="flex items-center gap-4 flex-1 lg:flex-initial lg:mr-auto">
         {isLoading ? (
           <div className="flex items-center gap-2">

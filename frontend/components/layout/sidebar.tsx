@@ -78,35 +78,39 @@ export function Sidebar({ scanId }: SidebarProps) {
   ];
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-card border-r">
-      <div className="flex h-14 items-center border-b px-4 bg-gradient-to-r from-background to-muted/50">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <ShieldAlert className="h-5 w-5 text-primary" />
-          <span className="text-lg tracking-tight text-gradient">CodeSupply</span>
+    <div className="flex h-full flex-col bg-card/50 backdrop-blur-2xl border-r border-border/40 selection:bg-purple-500/20">
+      <div className="flex h-16 items-center border-b border-border/40 px-5">
+        <Link href="/" className="flex items-center gap-3 font-bold group">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-[0_0_15px_rgba(139,92,246,0.3)] group-hover:scale-105 transition-transform">
+            <ShieldAlert className="h-4 w-4" />
+          </div>
+          <span className="text-base tracking-tight font-black bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            CodeSupply
+          </span>
         </Link>
       </div>
       
-      <div className="flex-1 overflow-auto py-4">
-        <nav className="grid gap-1 px-2">
+      <div className="flex-1 overflow-auto py-5">
+        <nav className="grid gap-1 px-3">
           {routes.map((route) => (
             <Link
               key={route.href}
               href={route.disabled ? '#' : route.href}
               className={cn(
-                "flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors group",
+                "flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 group",
                 route.active 
-                  ? "bg-primary text-primary-foreground" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                route.disabled && "opacity-50 cursor-not-allowed pointer-events-none"
+                  ? "bg-gradient-to-r from-purple-600/15 to-indigo-600/15 text-foreground border border-purple-500/30 shadow-[0_0_15px_rgba(139,92,246,0.1)] font-semibold" 
+                  : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
+                route.disabled && "opacity-40 cursor-not-allowed pointer-events-none"
               )}
             >
               <div className="flex items-center gap-3">
-                <route.icon className="h-4 w-4" />
+                <route.icon className={cn("h-4 w-4", route.active ? "text-purple-400" : "text-muted-foreground group-hover:text-foreground")} />
                 {route.label}
               </div>
               <span className={cn(
-                "text-xs tracking-widest opacity-0 group-hover:opacity-100 transition-opacity",
-                route.active ? "opacity-100 text-primary-foreground/70" : "text-muted-foreground"
+                "text-[10px] font-mono tracking-wider opacity-0 group-hover:opacity-100 transition-opacity px-1.5 py-0.5 rounded border border-border/40 bg-background/50",
+                route.active ? "opacity-100 text-purple-400 border-purple-500/20" : "text-muted-foreground"
               )}>
                 {route.shortcut}
               </span>
@@ -115,17 +119,21 @@ export function Sidebar({ scanId }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="mt-auto p-4 space-y-4">
+      <div className="mt-auto p-4 space-y-3 border-t border-border/40">
         {scanId && (
           <Link href="/">
-            <Button variant="outline" className="w-full justify-start gap-2" size="sm">
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="outline" className="w-full justify-start gap-2 rounded-xl border-border/60 bg-card/40 backdrop-blur-md text-xs font-medium hover:bg-card/70" size="sm">
+              <ChevronLeft className="h-3.5 w-3.5" />
               New Scan
             </Button>
           </Link>
         )}
-        <div className="text-center text-xs text-muted-foreground/70 font-medium">
-          v1.0
+        <div className="flex items-center justify-between px-2 pt-1 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-medium">Flow v1.2.0</span>
+          </div>
+          <span className="font-mono text-[10px] text-muted-foreground/60">SIH Edition</span>
         </div>
       </div>
     </div>
