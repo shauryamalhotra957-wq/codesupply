@@ -1,0 +1,3 @@
+[project]
+name = "pinned-app"
+dependencies = ["fastapi==0.115.0"]
