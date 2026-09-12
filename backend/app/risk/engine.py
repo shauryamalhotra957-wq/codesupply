@@ -51,18 +51,49 @@ class RiskEngine:
         "version_ambiguity": 8,
         "intelligence_unavailable": 12,
         "low_analysis_confidence": 5,
+        "conflicting_version": 15,
+        "duplicate_declaration": 8,
+        "wildcard_version": 10,
+        "deprecated_package": 25,
     }
 
-    def assess_component(self, component, vulnerabilities: list, lookup_status: str) -> RiskAssessment:
+    KNOWN_DEPRECATED_PACKAGES = {
+        "pypi": {
+            "pycrypto": "Deprecated and unmaintained. Replace with 'cryptography' or 'pycryptodome'.",
+            "python-jwt": "Vulnerable to signature bypass. Upgrade to 'PyJWT>=2.0.0'.",
+            "fabric": "Legacy version 1 is unmaintained. Use Fabric 2+ or Invoke.",
+        },
+        "npm": {
+            "request": "Deprecated since 2020. Replace with 'axios', 'got', or native 'fetch'.",
+            "left-pad": "Historical risk artifact. Use String.prototype.padStart().",
+            "nomnom": "Deprecated CLI parser. Replace with 'commander' or 'yargs'.",
+            "querystring": "Node.js core module legacy. Use URLSearchParams.",
+        },
+    }
+
+    def assess_component(
+        self,
+        component,
+        vulnerabilities: list,
+        lookup_status: str,
+        anomalies: list[RiskReasonData] | None = None,
+    ) -> RiskAssessment:
         """Calculate risk for a single component.
 
         Args:
             component: Component ORM object
             vulnerabilities: List of VulnerabilityFinding ORM objects
             lookup_status: Status string (checked, unavailable, cached, not_applicable, unknown)
+            anomalies: Optional list of pre-calculated cross-manifest anomalies (conflicts, duplicates)
         """
         score = 0.0
         reasons: list[RiskReasonData] = []
+
+        # Add pre-calculated anomalies (conflicts, duplicate declarations)
+        if anomalies:
+            for anomaly in anomalies:
+                score += anomaly.severity_contribution
+                reasons.append(anomaly)
 
         # Vulnerability-based risk
         for vuln in vulnerabilities:
@@ -138,6 +169,37 @@ class RiskEngine:
                     weight,
                 )
             )
+
+        # Wildcard version check
+        if component.version in ("*", "latest") or (
+            component.original_declaration
+            and any(w in component.original_declaration for w in ("*", "latest"))
+        ):
+            weight = self.RULES["wildcard_version"]
+            score += weight
+            reasons.append(
+                RiskReasonData(
+                    "wildcard_version",
+                    f"Wildcard or latest version specifier for '{component.name}' allows unvetted upstream updates",
+                    weight,
+                )
+            )
+
+        # Deprecated package check
+        eco_key = (component.ecosystem or "").lower()
+        if eco_key in self.KNOWN_DEPRECATED_PACKAGES:
+            dep_map = self.KNOWN_DEPRECATED_PACKAGES[eco_key]
+            comp_name_clean = (component.name or "").lower()
+            if comp_name_clean in dep_map:
+                weight = self.RULES["deprecated_package"]
+                score += weight
+                reasons.append(
+                    RiskReasonData(
+                        "deprecated_package",
+                        f"Deprecated component '{component.name}': {dep_map[comp_name_clean]}",
+                        weight,
+                    )
+                )
 
         # Intelligence availability
         if lookup_status == "unavailable":

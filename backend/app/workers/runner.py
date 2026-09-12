@@ -736,6 +736,38 @@ class ScanWorker:
                     total=len(all_components),
                 )
 
+                # Pre-calculate cross-manifest duplicates and version conflicts
+                from app.risk.engine import RiskReasonData
+                comp_occurrences: dict[str, list[Component]] = {}
+                for c in all_components:
+                    key = f"{c.ecosystem}:{c.name.lower()}"
+                    comp_occurrences.setdefault(key, []).append(c)
+
+                component_anomalies: dict[str, list[RiskReasonData]] = {}
+                for key, comps in comp_occurrences.items():
+                    if len(comps) > 1:
+                        versions = list({c.version for c in comps if c.version})
+                        files = list({c.source_file for c in comps if c.source_file})
+
+                        if len(versions) > 1:
+                            for c in comps:
+                                component_anomalies.setdefault(c.id, []).append(
+                                    RiskReasonData(
+                                        "conflicting_version",
+                                        f"Conflicting versions ({', '.join(versions)}) declared for '{c.name}' across manifests: {', '.join(files)}",
+                                        15.0,
+                                    )
+                                )
+                        else:
+                            for c in comps:
+                                component_anomalies.setdefault(c.id, []).append(
+                                    RiskReasonData(
+                                        "duplicate_declaration",
+                                        f"Duplicate declaration of '{c.name}' across manifest files: {', '.join(files)}",
+                                        8.0,
+                                    )
+                                )
+
                 for i, comp in enumerate(all_components):
                     # Get vulnerabilities for this component
                     comp_vulns_result = await db.execute(
@@ -753,8 +785,11 @@ class ScanWorker:
                     lookup = lookup_result.scalar_one_or_none()
                     lookup_status = lookup.status if lookup else "unknown"
 
-                    # Assess risk
-                    assessment = self.risk_engine.assess_component(comp, list(comp_vulns), lookup_status)
+                    # Assess risk including cross-manifest anomalies
+                    comp_anomalies = component_anomalies.get(comp.id, [])
+                    assessment = self.risk_engine.assess_component(
+                        comp, list(comp_vulns), lookup_status, anomalies=comp_anomalies
+                    )
 
                     # Update component
                     comp.risk_level = assessment.risk_level
