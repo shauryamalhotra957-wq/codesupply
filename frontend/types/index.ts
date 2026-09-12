@@ -188,3 +188,16 @@ export interface RemediationsResponse {
   remediations: RemediationAction[];
 }
 
+export interface ComponentExplanation {
+  component_id: string;
+  component_name: string;
+  version: string | null;
+  summary: string;
+  why_it_matters: string;
+  what_to_do: string;
+  technical_detail: string;
+  label: string;
+  disclaimer: string;
+}
+
+

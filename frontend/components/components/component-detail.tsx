@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Component } from '@/types';
+import { Component, ComponentExplanation } from '@/types';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RiskBadge } from '@/components/shared/risk-badge';
@@ -9,7 +9,7 @@ import { EcosystemBadge } from '@/components/shared/ecosystem-badge';
 import { ConfidenceBadge } from '@/components/shared/confidence-badge';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Copy, ExternalLink, ShieldAlert } from 'lucide-react';
+import { Copy, ExternalLink, ShieldAlert, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ComponentDetailProps {
@@ -22,18 +22,35 @@ interface ComponentDetailProps {
 export function ComponentDetail({ scanId, componentId, open, onOpenChange }: ComponentDetailProps) {
   const [component, setComponent] = useState<Component | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [explanation, setExplanation] = useState<ComponentExplanation | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
 
   useEffect(() => {
     if (open && componentId) {
       setIsLoading(true);
+      setExplanation(null);
       api.getComponent(scanId, componentId)
         .then(setComponent)
         .catch(console.error)
         .finally(() => setIsLoading(false));
     } else {
       setComponent(null);
+      setExplanation(null);
     }
   }, [scanId, componentId, open]);
+
+  const handleExplain = async () => {
+    if (!component) return;
+    setIsExplaining(true);
+    try {
+      const res = await api.explainComponent(scanId, component.id);
+      setExplanation(res);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExplaining(false);
+    }
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -133,6 +150,71 @@ export function ComponentDetail({ scanId, componentId, open, onOpenChange }: Com
                         </ul>
                       </section>
                     )}
+
+                    <section className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">AI Security Intelligence</h3>
+                        {!explanation && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleExplain}
+                            disabled={isExplaining}
+                            className="h-8 gap-1.5 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border-purple-500/30"
+                          >
+                            {isExplaining ? (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-3.5 w-3.5" /> Explain this component
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+
+                      {explanation && (
+                        <div className="rounded-xl border border-purple-500/30 bg-purple-950/20 p-4 space-y-3 text-sm">
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px] font-medium flex items-center gap-1">
+                              <Sparkles className="h-3 w-3" /> {explanation.label}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleExplain}
+                              disabled={isExplaining}
+                              className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                            >
+                              Refresh
+                            </Button>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Summary</h4>
+                            <p className="mt-1 text-sm text-foreground leading-relaxed">{explanation.summary}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Why It Matters</h4>
+                            <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{explanation.why_it_matters}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">Recommended Action</h4>
+                            <p className="mt-1 text-sm text-foreground/90 font-mono bg-muted/40 p-2.5 rounded-lg border border-border/40 text-xs">
+                              {explanation.what_to_do}
+                            </p>
+                          </div>
+
+                          <p className="text-[11px] text-muted-foreground/70 italic pt-1 border-t border-border/30">
+                            * {explanation.disclaimer}
+                          </p>
+                        </div>
+                      )}
+                    </section>
                   </TabsContent>
 
                   <TabsContent value="vulnerabilities" className="m-0">

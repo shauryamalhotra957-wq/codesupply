@@ -8,7 +8,8 @@ import {
   Vulnerability,
   SBOMData,
   HealthResponse,
-  RemediationsResponse
+  RemediationsResponse,
+  ComponentExplanation
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -192,6 +193,12 @@ class ApiClient {
 
   
 
+
+  async explainComponent(scanId: string, componentId: string): Promise<ComponentExplanation> {
+    return fetchWithBase(`/scans/${scanId}/components/${componentId}/explain`, {
+      method: "POST",
+    });
+  }
 
   async getScanDiff(baseScanId: string, compareScanId: string) {
     return fetchWithBase("/scans/" + baseScanId + "/diff/" + compareScanId);

@@ -248,3 +248,21 @@ class ProgressResponse(BaseModel):
     completed: int
     total: int
     message: str | None = None
+
+
+# ── AI Explanation ────────────────────────────────────────────────────────────
+
+
+class ComponentExplanationResponse(BaseModel):
+    component_id: str
+    component_name: str
+    version: str | None = None
+    summary: str
+    why_it_matters: str
+    what_to_do: str
+    technical_detail: str
+    label: str = "AI-assisted explanation"
+    disclaimer: str = (
+        "Recommendations are generated from detected project metadata and available findings. "
+        "Verify changes before applying them."
+    )

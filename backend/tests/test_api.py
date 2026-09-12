@@ -158,3 +158,14 @@ async def test_vex_and_remediations_and_csv_endpoints():
         csv_text = csv_res.text
         assert "lodash" in csv_text
         assert "pkg:npm/lodash@4.17.15" in csv_text
+
+        # 5. Test AI Component Explanation endpoint
+        explain_res = await client.post(f"/api/scans/{test_id}/components/{c_id}/explain")
+        assert explain_res.status_code == 200
+        explain_data = explain_res.json()
+        assert explain_data["component_id"] == c_id
+        assert explain_data["component_name"] == "lodash"
+        assert "summary" in explain_data
+        assert "why_it_matters" in explain_data
+        assert "what_to_do" in explain_data
+        assert "AI-assisted explanation" in explain_data["label"]

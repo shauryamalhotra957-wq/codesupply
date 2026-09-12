@@ -8,6 +8,7 @@ import {
   ShieldAlert, 
   Network, 
   FileJson,
+  FileText,
   History,
   Settings,
   ChevronLeft,
@@ -68,12 +69,28 @@ export function Sidebar({ scanId }: SidebarProps) {
       shortcut: '⌘5'
     },
     {
+      label: 'Executive Report',
+      icon: FileText,
+      href: scanId ? `/scan/${scanId}/report` : '#',
+      active: pathname === `/scan/${scanId}/report`,
+      disabled: !scanId,
+      shortcut: '⌘6'
+    },
+    {
       label: 'Scan History',
       icon: History,
       href: '/scans',
       active: pathname === '/scans',
       disabled: false,
-      shortcut: '⌘6'
+      shortcut: '⌘7'
+    },
+    {
+      label: 'Settings',
+      icon: Settings,
+      href: '/settings',
+      active: pathname === '/settings',
+      disabled: false,
+      shortcut: '⌘8'
     }
   ];
 

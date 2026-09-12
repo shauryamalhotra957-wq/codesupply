@@ -53,6 +53,7 @@ from app.schemas.schemas import (
     ScanSummaryResponse,
     VulnerabilityListResponse,
     VulnerabilityResponse,
+    ComponentExplanationResponse,
 )
 from app.workers.runner import ScanWorker
 
@@ -522,6 +523,62 @@ async def get_scan_component(
         )
 
     return await _build_component_response(comp, db)
+
+
+@router.post("/scans/{scan_id}/components/{component_id}/explain", response_model=ComponentExplanationResponse)
+async def explain_scan_component(
+    scan_id: str,
+    component_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate structured AI-assisted risk explanation for a component."""
+    await _get_scan_or_404(scan_id, db)
+
+    result = await db.execute(select(Component).where(Component.id == component_id, Component.scan_id == scan_id))
+    comp = result.scalar_one_or_none()
+    if not comp:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "COMPONENT_NOT_FOUND",
+                    "message": "Component not found.",
+                }
+            },
+        )
+
+    # Get vulnerabilities
+    vuln_result = await db.execute(
+        select(VulnerabilityFinding).where(VulnerabilityFinding.component_id == comp.id)
+    )
+    vulns = vuln_result.scalars().all()
+
+    # Get risk reasons
+    risk_result = await db.execute(select(RiskReason).where(RiskReason.component_id == comp.id))
+    risk_reasons = risk_result.scalars().all()
+
+    # Get evidence
+    ev_result = await db.execute(select(Evidence).where(Evidence.component_id == comp.id))
+    evidences = ev_result.scalars().all()
+
+    from app.services.ai_explainer import AIExplanationService
+
+    explanation = AIExplanationService.explain_component(
+        component_id=comp.id,
+        component_name=comp.name,
+        version=comp.version,
+        ecosystem=comp.ecosystem,
+        dependency_type=comp.dependency_type,
+        risk_level=comp.risk_level,
+        risk_score=comp.risk_score,
+        risk_reasons=risk_reasons,
+        vulnerabilities=vulns,
+        evidence=evidences,
+        purl=comp.purl,
+        source_file=comp.source_file,
+    )
+
+    return ComponentExplanationResponse(**explanation)
 
 
 @router.get("/scans/{scan_id}/graph")
