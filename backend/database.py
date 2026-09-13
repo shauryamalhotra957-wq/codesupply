@@ -1,10 +1,11 @@
 import json
+import os
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, Generator, List, Optional
 
-DB_PATH = Path(__file__).parent / "codesupply.db"
+DB_PATH = Path(os.getenv("CODESUPPLY_STANDALONE_DB", Path(__file__).parent / "codesupply_projects.db"))
 
 
 @contextmanager
@@ -22,6 +23,12 @@ def init_db():
     """Initializes SQLite tables for projects, components, relationships, findings, and SBOMs."""
     with get_db() as conn:
         cursor = conn.cursor()
+        # Verify if existing components table matches expected schema
+        cursor.execute("PRAGMA table_info(components)")
+        cols = [row["name"] for row in cursor.fetchall()]
+        if cols and "project_id" not in cols:
+            cursor.execute("DROP TABLE components")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS projects (
                 id TEXT PRIMARY KEY,

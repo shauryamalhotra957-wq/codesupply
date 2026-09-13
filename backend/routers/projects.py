@@ -17,9 +17,11 @@ from fastapi import APIRouter, File, HTTPException, Response, UploadFile
 from fastapi.responses import JSONResponse
 from scanner.normalization.normalizer import NormalizedComponent
 from scanner.sbom.differ import SbomDiffer
+from scanner.sbom.sarif_generator import SarifGenerator
 from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractionError
 from scanner.security.vuln_engine import VulnerabilityEngine
+from backend.services.license_policy_service import LicensePolicyService
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 scanner_service = ScannerService()
@@ -289,3 +291,38 @@ def compare_sbom_projects(base_project_id: str, target_project_id: str):
         target_components=target_components,
     )
     return diff_result
+
+
+@router.get("/{project_id}/export/sarif")
+def export_sarif(project_id: str):
+    """Exports scan findings as an OASIS SARIF v2.1.0 security report for GitHub Code Scanning."""
+    proj = DatabaseRepository.get_project(project_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    findings = DatabaseRepository.get_findings(project_id)
+    components = DatabaseRepository.get_components(project_id)
+
+    sarif_doc = SarifGenerator.generate_sarif(
+        project_name=proj["name"],
+        findings=findings,
+        components=components,
+    )
+    filename = f"{proj['name'].replace(' ', '_').lower()}-sarif-2.1.0.json"
+    return Response(
+        content=json.dumps(sarif_doc, indent=2),
+        media_type="application/sarif+json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/{project_id}/licenses")
+def get_project_licenses(project_id: str):
+    """Evaluates license compliance, distribution, and copyleft risks across all components."""
+    proj = DatabaseRepository.get_project(project_id)
+    if not proj:
+        raise HTTPException(status_code=404, detail="Project not found.")
+
+    components = DatabaseRepository.get_components(project_id)
+    return LicensePolicyService.evaluate_project_licenses(components)
+

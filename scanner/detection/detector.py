@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pathlib import Path
 from typing import Dict, List, Set
 
@@ -32,6 +32,10 @@ MANIFEST_ECOSYSTEM_MAP = {
     "Cargo.lock": "cargo",
     "go.mod": "golang",
     "go.sum": "golang",
+    "Gemfile": "gem",
+    "Gemfile.lock": "gem",
+    "composer.json": "composer",
+    "composer.lock": "composer",
 }
 
 
@@ -92,6 +96,10 @@ class ProjectDetector:
                     ecosystem = "cargo"
                 elif lower_name == "go.mod" or lower_name == "go.sum":
                     ecosystem = "golang"
+                elif lower_name == "gemfile" or lower_name == "gemfile.lock":
+                    ecosystem = "gem"
+                elif lower_name == "composer.json" or lower_name == "composer.lock":
+                    ecosystem = "composer"
 
                 if ecosystem:
                     detected_ecosystems.add(ecosystem)

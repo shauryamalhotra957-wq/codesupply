@@ -1,4 +1,4 @@
-﻿import re
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 from urllib.parse import quote
@@ -100,6 +100,16 @@ class DependencyNormalizer:
             if version:
                 return f"pkg:golang/{norm_name}@{version}"
             return f"pkg:golang/{norm_name}"
+        elif eco in ("gem", "ruby", "rubygems"):
+            norm_name = name.strip().lower()
+            if version:
+                return f"pkg:gem/{norm_name}@{version}"
+            return f"pkg:gem/{norm_name}"
+        elif eco in ("composer", "php", "packagist"):
+            norm_name = name.strip().lower()
+            if version:
+                return f"pkg:composer/{norm_name}@{version}"
+            return f"pkg:composer/{norm_name}"
         else:
             if version:
                 return f"pkg:generic/{name}@{version}"

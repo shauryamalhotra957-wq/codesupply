@@ -10,6 +10,8 @@ from scanner.detection.detector import ProjectDetector
 from scanner.normalization.normalizer import DependencyNormalizer, NormalizedComponent
 from scanner.parsers.base import ParsedDependency
 from scanner.parsers.cargo_parser import CargoParser
+from scanner.parsers.composer_parser import ComposerParser
+from scanner.parsers.gemfile_parser import GemfileParser
 from scanner.parsers.golang_parser import GolangParser
 from scanner.parsers.node_parser import NodeParser
 from scanner.parsers.python_parser import PythonParser
@@ -29,6 +31,8 @@ class ScannerService:
         self.node_parser = NodeParser()
         self.cargo_parser = CargoParser()
         self.golang_parser = GolangParser()
+        self.gemfile_parser = GemfileParser()
+        self.composer_parser = ComposerParser()
         self.explanation_service = RiskExplanationService()
 
     def scan_archive(self, zip_path: Path | str, project_name: str, file_size_bytes: int = 0) -> Dict[str, Any]:
@@ -79,6 +83,12 @@ class ScannerService:
                 raw_dependencies.extend(parsed)
             elif self.golang_parser.can_parse(filename):
                 parsed = self.golang_parser.parse(file_path, rel_path)
+                raw_dependencies.extend(parsed)
+            elif self.gemfile_parser.can_parse(filename):
+                parsed = self.gemfile_parser.parse(file_path, rel_path)
+                raw_dependencies.extend(parsed)
+            elif self.composer_parser.can_parse(filename):
+                parsed = self.composer_parser.parse(file_path, rel_path)
                 raw_dependencies.extend(parsed)
 
         # 3. Normalize dependencies & PURLs
