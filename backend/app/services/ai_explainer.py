@@ -1,4 +1,4 @@
-﻿"""AI Security Explainer Service — provides deterministic and AI-assisted explanations
+"""AI Security Explainer Service — provides deterministic and AI-assisted explanations
 
 conforming strictly to the product principle:
 1. The deterministic scanner is the source of truth.
@@ -93,13 +93,19 @@ class AIExplanationService:
             if fixed_vers:
                 actions.append(f"Upgrade {component_name} to version {fixed_vers[0]} or higher to patch active CVEs.")
             else:
-                actions.append(f"Investigate alternative packages or apply runtime mitigations until an upstream patch is released.")
+                actions.append(
+                    "Investigate alternative packages or apply runtime mitigations until an upstream patch is released."
+                )
 
         if is_direct:
             if ecosystem.lower() == "npm":
-                actions.append(f"Run `npm install {component_name}@latest` or update `package.json` with an exact pinned version.")
+                actions.append(
+                    f"Run `npm install {component_name}@latest` or update `package.json` with an exact pinned version."
+                )
             elif ecosystem.lower() in ("pypi", "python"):
-                actions.append(f"Update `requirements.txt` or `pyproject.toml` with `{component_name}==<pinned_version>`.")
+                actions.append(
+                    f"Update `requirements.txt` or `pyproject.toml` with `{component_name}==<pinned_version>`."
+                )
             elif ecosystem.lower() == "cargo":
                 actions.append(f"Run `cargo update -p {component_name}` to resolve to the latest compatible crate.")
             elif ecosystem.lower() == "golang":
@@ -125,9 +131,12 @@ class AIExplanationService:
                 vuln_ids.append(vid)
             detail_lines.append(f"Associated Advisories: {', '.join(vuln_ids)}{'...' if vuln_count > 5 else ''}")
         if risk_reasons:
-            reasons_str = "; ".join([
-                (r.get("description") if isinstance(r, dict) else getattr(r, "description", "")) for r in risk_reasons[:3]
-            ])
+            reasons_str = "; ".join(
+                [
+                    (r.get("description") if isinstance(r, dict) else getattr(r, "description", ""))
+                    for r in risk_reasons[:3]
+                ]
+            )
             detail_lines.append(f"Risk Factors: {reasons_str}")
 
         technical_detail = "\n".join(detail_lines)

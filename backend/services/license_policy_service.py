@@ -97,21 +97,25 @@ class LicensePolicyService:
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
             if cat == "strong_copyleft":
-                high_risk_components.append({
-                    "name": comp.get("name"),
-                    "version": comp.get("version"),
-                    "license": raw_lic,
-                    "risk": "Strong Copyleft (Viral GPL/AGPL constraint on downstream distribution)",
-                    "severity": "HIGH",
-                })
+                high_risk_components.append(
+                    {
+                        "name": comp.get("name"),
+                        "version": comp.get("version"),
+                        "license": raw_lic,
+                        "risk": "Strong Copyleft (Viral GPL/AGPL constraint on downstream distribution)",
+                        "severity": "HIGH",
+                    }
+                )
             elif cat == "unknown":
-                high_risk_components.append({
-                    "name": comp.get("name"),
-                    "version": comp.get("version"),
-                    "license": "Unspecified",
-                    "risk": "Missing license metadata (potential legal ambiguity)",
-                    "severity": "LOW",
-                })
+                high_risk_components.append(
+                    {
+                        "name": comp.get("name"),
+                        "version": comp.get("version"),
+                        "license": "Unspecified",
+                        "risk": "Missing license metadata (potential legal ambiguity)",
+                        "severity": "LOW",
+                    }
+                )
 
         compliance_score = 100
         if category_counts["strong_copyleft"] > 0:

@@ -40,6 +40,7 @@ from app.models.models import (
     VulnerabilityFinding,
 )
 from app.schemas.schemas import (
+    ComponentExplanationResponse,
     ComponentListResponse,
     ComponentResponse,
     EvidenceResponse,
@@ -53,7 +54,6 @@ from app.schemas.schemas import (
     ScanSummaryResponse,
     VulnerabilityListResponse,
     VulnerabilityResponse,
-    ComponentExplanationResponse,
 )
 from app.workers.runner import ScanWorker
 
@@ -548,9 +548,7 @@ async def explain_scan_component(
         )
 
     # Get vulnerabilities
-    vuln_result = await db.execute(
-        select(VulnerabilityFinding).where(VulnerabilityFinding.component_id == comp.id)
-    )
+    vuln_result = await db.execute(select(VulnerabilityFinding).where(VulnerabilityFinding.component_id == comp.id))
     vulns = vuln_result.scalars().all()
 
     # Get risk reasons

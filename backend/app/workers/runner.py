@@ -738,6 +738,7 @@ class ScanWorker:
 
                 # Pre-calculate cross-manifest duplicates and version conflicts
                 from app.risk.engine import RiskReasonData
+
                 comp_occurrences: dict[str, list[Component]] = {}
                 for c in all_components:
                     key = f"{c.ecosystem}:{c.name.lower()}"

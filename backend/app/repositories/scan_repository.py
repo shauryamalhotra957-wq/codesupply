@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import (
@@ -197,7 +197,9 @@ class ScanRepository:
         components_by_ecosystem = dict(eco_result.all())
 
         risk_result = await self.session.execute(
-            select(Component.risk_level, func.count()).where(Component.scan_id == scan_id).group_by(Component.risk_level)
+            select(Component.risk_level, func.count())
+            .where(Component.scan_id == scan_id)
+            .group_by(Component.risk_level)
         )
         components_by_risk = dict(risk_result.all())
 

@@ -114,7 +114,8 @@ class OSVClient:
             component_id=component.id,
             vuln_id=vuln_data.get("id", "UNKNOWN"),
             aliases=vuln_data.get("aliases", []),
-            summary=vuln_data.get("summary") or (vuln_data.get("details", "")[:200] if vuln_data.get("details") else None),
+            summary=vuln_data.get("summary")
+            or (vuln_data.get("details", "")[:200] if vuln_data.get("details") else None),
             severity=severity_val,
             references=[ref.get("url") for ref in vuln_data.get("references", []) if ref.get("url")],
             source="osv",

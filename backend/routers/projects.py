@@ -11,6 +11,7 @@ from backend.models import (
     SbomComparisonModel,
     VulnerabilityModel,
 )
+from backend.services.license_policy_service import LicensePolicyService
 from backend.services.report_generator import ReportGenerator
 from backend.services.scanner_service import ScannerService
 from fastapi import APIRouter, File, HTTPException, Response, UploadFile
@@ -21,7 +22,6 @@ from scanner.sbom.sarif_generator import SarifGenerator
 from scanner.sbom.spdx_generator import SPDXGenerator
 from scanner.security.safe_extractor import SafeExtractionError
 from scanner.security.vuln_engine import VulnerabilityEngine
-from backend.services.license_policy_service import LicensePolicyService
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 scanner_service = ScannerService()
@@ -325,4 +325,3 @@ def get_project_licenses(project_id: str):
 
     components = DatabaseRepository.get_components(project_id)
     return LicensePolicyService.evaluate_project_licenses(components)
-

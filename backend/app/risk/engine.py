@@ -172,8 +172,7 @@ class RiskEngine:
 
         # Wildcard version check
         if component.version in ("*", "latest") or (
-            component.original_declaration
-            and any(w in component.original_declaration for w in ("*", "latest"))
+            component.original_declaration and any(w in component.original_declaration for w in ("*", "latest"))
         ):
             weight = self.RULES["wildcard_version"]
             score += weight
