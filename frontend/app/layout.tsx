@@ -1,5 +1,18 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'CodeSupply — Software Supply Chain & SBOM Intelligence',
@@ -12,23 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.getItem('theme') === 'light') {
-                  document.documentElement.classList.remove('dark');
-                } else {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
-      </head>
-      <body className="antialiased min-h-screen bg-background text-foreground selection:bg-purple-500/20 selection:text-purple-200">
+    <html lang="en" className={`dark ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased min-h-screen bg-background text-foreground font-sans selection:bg-purple-500/20 selection:text-purple-200">
         {children}
       </body>
     </html>
